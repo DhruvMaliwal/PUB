@@ -931,7 +931,7 @@ function renderDayGrid() {
           <div class="day-card-date">${MONTHS[dt.getMonth()]} ${dt.getDate()}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          ${hasDishes ? `<button class="recipe-dl-btn" onclick="downloadDayRecipes(event,${i})" title="Download Hindi recipe links">🎬 Recipes</button>` : ''}
+          ${hasDishes ? `<button class="recipe-dl-btn" onclick="downloadDayRecipes(event,${i})" title="Open recipe links in Google Sheets">📋 Recipes</button>` : ''}
           <div class="day-check">${sel?'✓':''}</div>
         </div>
       </div>
@@ -1889,25 +1889,23 @@ function downloadDayRecipes(event, dayIdx) {
     {meal: 'Breakfast', dish: day.breakfast.dish},
     {meal: 'Lunch', dish: day.lunch.dish},
     {meal: 'Dinner', dish: day.dinner.dish},
-  ];
-  const hasDish = meals.some(m => m.dish);
-  if (!hasDish) { toast('No dishes for this day', '!'); return; }
+  ].filter(m => m.dish);
 
-  try {
-    const bytes = buildRecipeXLSX(dayName, meals);
-    const blob = new Blob([bytes], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = dayName.toLowerCase() + '_recipes.xlsx';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast('Downloading ' + dayName + ' recipes ✓');
-  } catch(e) {
-    toast('Download failed: ' + e.message, '!');
-  }
+  if (!meals.length) { toast('No dishes for this day', '!'); return; }
+
+  // Build tab-separated text (pastes natively into Google Sheets as a table)
+  const header = 'Day\tMeal\tDish\tYouTube Recipe (Hindi, <6 min)';
+  const rows = meals.map(m => `${dayName}\t${m.meal}\t${m.dish}\t${buildYoutubeUrl(m.dish)}`);
+  const tsv = [header, ...rows].join('\n');
+
+  navigator.clipboard.writeText(tsv).then(() => {
+    window.open('https://sheets.new', '_blank');
+    toast('Sheet opened — press Ctrl+V (or ⌘V) to paste recipes');
+  }).catch(() => {
+    // Fallback: show the data in a prompt so user can copy manually
+    window.open('https://sheets.new', '_blank');
+    toast('Sheet opened — data copy failed, paste manually', '!');
+  });
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
