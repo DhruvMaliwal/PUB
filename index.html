@@ -280,6 +280,12 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
 }
 .meal-row-item:hover .meal-edit-btn { opacity: 1; }
 .meal-edit-btn:hover { background: var(--green-lt); color: var(--green); border-color: var(--green); }
+.recipe-dl-btn {
+  padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 11px; font-weight: 600;
+  color: var(--text-2); transition: all 0.12s; white-space: nowrap;
+}
+.recipe-dl-btn:hover { background: var(--amber-lt); color: var(--amber); border-color: var(--amber); }
 
 /* ─── MODAL ─── */
 .modal-backdrop {
@@ -917,13 +923,17 @@ function renderDayGrid() {
   grid.innerHTML = plan.map((day, i) => {
     const sel = state.selectedDays.has(i);
     const dt = dates[i];
+    const hasDishes = day.breakfast.dish || day.lunch.dish || day.dinner.dish;
     return `<div class="day-card ${sel?'selected':''}" onclick="toggleDaySelect(${i})">
       <div class="day-card-header">
         <div>
           <div class="day-card-name">${DAYS_OF_WEEK[i]}</div>
           <div class="day-card-date">${MONTHS[dt.getMonth()]} ${dt.getDate()}</div>
         </div>
-        <div class="day-check">${sel?'✓':''}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          ${hasDishes ? `<button class="recipe-dl-btn" onclick="downloadDayRecipes(event,${i})" title="Download Hindi recipe links">🎬 Recipes</button>` : ''}
+          <div class="day-check">${sel?'✓':''}</div>
+        </div>
       </div>
       ${['breakfast','lunch','dinner'].map(m => `
         <div class="meal-row-item">
@@ -1703,6 +1713,201 @@ function toast(msg, type) {
   el.innerHTML = `<span style="color:${color}">${icon}</span> ${msg}`;
   stack.appendChild(el);
   setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),250); }, 2600);
+}
+
+// ─── RECIPE EXCEL DOWNLOAD ────────────────────────────────────────────────────
+function buildYoutubeUrl(dish) {
+  return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(dish.trim() + ' recipe hindi') + '&sp=EgIYAQ%3D%3D';
+}
+
+function crc32(data) {
+  let table = [];
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table.push(c);
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < data.length; i++) crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xFF];
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function strToBytes(s) {
+  return new TextEncoder().encode(s);
+}
+
+function buildZipUncompressed(files) {
+  // files: [{name, data: Uint8Array}]
+  const enc = s => strToBytes(s);
+  const u16le = n => [n & 0xFF, (n >> 8) & 0xFF];
+  const u32le = n => [n & 0xFF, (n >> 8) & 0xFF, (n >> 16) & 0xFF, (n >> 24) & 0xFF];
+
+  const localHeaders = [];
+  const centralDirs = [];
+  let offset = 0;
+
+  for (const f of files) {
+    const nameBytes = enc(f.name);
+    const crc = crc32(f.data);
+    const size = f.data.length;
+
+    const local = new Uint8Array([
+      0x50,0x4B,0x03,0x04,   // sig
+      20,0,                   // version needed
+      0,0,                    // flags
+      0,0,                    // compression: stored
+      0,0,0,0,               // mod time/date
+      ...u32le(crc),
+      ...u32le(size),
+      ...u32le(size),
+      ...u16le(nameBytes.length),
+      0,0,                   // extra length
+      ...nameBytes,
+      ...f.data
+    ]);
+
+    const central = new Uint8Array([
+      0x50,0x4B,0x01,0x02,   // sig
+      20,0,                   // version made
+      20,0,                   // version needed
+      0,0,                    // flags
+      0,0,                    // compression: stored
+      0,0,0,0,               // mod time/date
+      ...u32le(crc),
+      ...u32le(size),
+      ...u32le(size),
+      ...u16le(nameBytes.length),
+      0,0,                   // extra
+      0,0,                   // comment
+      0,0,                   // disk start
+      0,0,                   // int attrs
+      0,0,0,0,               // ext attrs
+      ...u32le(offset),
+      ...nameBytes
+    ]);
+
+    localHeaders.push(local);
+    centralDirs.push(central);
+    offset += local.length;
+  }
+
+  const centralStart = offset;
+  const centralSize = centralDirs.reduce((s, b) => s + b.length, 0);
+  const eocd = new Uint8Array([
+    0x50,0x4B,0x05,0x06,
+    0,0, 0,0,
+    ...u16le(files.length),
+    ...u16le(files.length),
+    ...u32le(centralSize),
+    ...u32le(centralStart),
+    0,0
+  ]);
+
+  const parts = [...localHeaders, ...centralDirs, eocd];
+  const total = parts.reduce((s, b) => s + b.length, 0);
+  const out = new Uint8Array(total);
+  let pos = 0;
+  for (const p of parts) { out.set(p, pos); pos += p.length; }
+  return out;
+}
+
+function buildRecipeXLSX(dayName, meals) {
+  // meals: [{meal, dish}]
+  const xmlEsc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  const rows = meals.filter(m => m.dish).map((m, ri) => {
+    const rowNum = ri + 2;
+    const ytUrl = buildYoutubeUrl(m.dish);
+    const formula = `=HYPERLINK(&quot;${xmlEsc(ytUrl)}&quot;,&quot;▶ Watch Recipe&quot;)`;
+    return `<row r="${rowNum}">
+      <c r="A${rowNum}" t="inlineStr"><is><t>${xmlEsc(dayName)}</t></is></c>
+      <c r="B${rowNum}" t="inlineStr"><is><t>${xmlEsc(m.meal)}</t></is></c>
+      <c r="C${rowNum}" t="inlineStr"><is><t>${xmlEsc(m.dish)}</t></is></c>
+      <c r="D${rowNum}" t="str"><f>${formula}</f><v>▶ Watch Recipe</v></c>
+    </row>`;
+  }).join('');
+
+  const ws = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>
+    <row r="1">
+      <c r="A1" t="inlineStr"><is><t>Day</t></is></c>
+      <c r="B1" t="inlineStr"><is><t>Meal</t></is></c>
+      <c r="C1" t="inlineStr"><is><t>Dish</t></is></c>
+      <c r="D1" t="inlineStr"><is><t>YouTube Recipe (Hindi, &lt;6 min)</t></is></c>
+    </row>
+    ${rows}
+  </sheetData>
+  <cols>
+    <col min="1" max="1" width="12" customWidth="1"/>
+    <col min="2" max="2" width="14" customWidth="1"/>
+    <col min="3" max="3" width="30" customWidth="1"/>
+    <col min="4" max="4" width="30" customWidth="1"/>
+  </cols>
+</worksheet>`;
+
+  const wb = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="Recipes" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`;
+
+  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>`;
+
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+</Types>`;
+
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+  const enc = s => strToBytes(s);
+  return buildZipUncompressed([
+    {name: '[Content_Types].xml', data: enc(ct)},
+    {name: '_rels/.rels', data: enc(rootRels)},
+    {name: 'xl/workbook.xml', data: enc(wb)},
+    {name: 'xl/_rels/workbook.xml.rels', data: enc(wbRels)},
+    {name: 'xl/worksheets/sheet1.xml', data: enc(ws)},
+  ]);
+}
+
+function downloadDayRecipes(event, dayIdx) {
+  event.stopPropagation();
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  const day = plan[dayIdx];
+  const dayName = DAYS_OF_WEEK[dayIdx];
+  const meals = [
+    {meal: 'Breakfast', dish: day.breakfast.dish},
+    {meal: 'Lunch', dish: day.lunch.dish},
+    {meal: 'Dinner', dish: day.dinner.dish},
+  ];
+  const hasDish = meals.some(m => m.dish);
+  if (!hasDish) { toast('No dishes for this day', '!'); return; }
+
+  try {
+    const bytes = buildRecipeXLSX(dayName, meals);
+    const blob = new Blob([bytes], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = dayName.toLowerCase() + '_recipes.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Downloading ' + dayName + ' recipes ✓');
+  } catch(e) {
+    toast('Download failed: ' + e.message, '!');
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
