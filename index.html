@@ -1895,7 +1895,7 @@ function downloadDayRecipes(event, dayIdx) {
 
   // Build tab-separated text (pastes natively into Google Sheets as a table)
   const header = 'Day\tMeal\tDish\tYouTube Recipe (Hindi, <6 min)';
-  const rows = meals.map(m => `${dayName}\t${m.meal}\t${m.dish}\t${buildYoutubeUrl(m.dish)}`);
+  const rows = meals.map(m => `${dayName}\t${m.meal}\t${m.dish}\t=HYPERLINK("${buildYoutubeUrl(m.dish)}","▶ Watch Recipe")`);
   const tsv = [header, ...rows].join('\n');
 
   navigator.clipboard.writeText(tsv).then(() => {
