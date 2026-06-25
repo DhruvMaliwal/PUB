@@ -672,6 +672,32 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
   </div>
 </div>
 
+<!-- ── MODAL: Recipes ────────────────────── -->
+<div class="modal-backdrop" id="modal-recipes" onclick="closeModalBackdrop(event,'modal-recipes')">
+  <div class="modal" style="width:640px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-recipes-title">Recipes</div>
+      <button class="modal-close" onclick="closeModal('modal-recipes')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <table id="recipes-table" style="width:100%;border-collapse:collapse;font-size:13.5px">
+        <thead>
+          <tr style="background:var(--green-lt);color:var(--green-dk)">
+            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Meal</th>
+            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Dish</th>
+            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Hindi Recipe (under 6 min)</th>
+          </tr>
+        </thead>
+        <tbody id="recipes-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <div style="font-size:12px;color:var(--text-3)">Links open YouTube search filtered to Hindi videos under 6 minutes</div>
+      <button class="btn btn-outline" onclick="closeModal('modal-recipes')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── MODAL: Template ────────────────────── -->
 <div class="modal-backdrop" id="modal-template" onclick="closeModalBackdrop(event,'modal-template')">
   <div class="modal" style="width:600px">
@@ -1893,19 +1919,20 @@ function downloadDayRecipes(event, dayIdx) {
 
   if (!meals.length) { toast('No dishes for this day', '!'); return; }
 
-  // Build tab-separated text (pastes natively into Google Sheets as a table)
-  const header = 'Day\tMeal\tDish\tYouTube Recipe (Hindi, <6 min)';
-  const rows = meals.map(m => `${dayName}\t${m.meal}\t${m.dish}\t=HYPERLINK("${buildYoutubeUrl(m.dish)}","▶ Watch Recipe")`);
-  const tsv = [header, ...rows].join('\n');
-
-  navigator.clipboard.writeText(tsv).then(() => {
-    window.open('https://sheets.new', '_blank');
-    toast('Sheet opened — press Ctrl+V (or ⌘V) to paste recipes');
-  }).catch(() => {
-    // Fallback: show the data in a prompt so user can copy manually
-    window.open('https://sheets.new', '_blank');
-    toast('Sheet opened — data copy failed, paste manually', '!');
-  });
+  document.getElementById('modal-recipes-title').textContent = dayName + ' — Recipe Links';
+  const mealColors = {Breakfast:'var(--amber)',Lunch:'var(--green)',Dinner:'#7C5CBF'};
+  document.getElementById('recipes-tbody').innerHTML = meals.map(m => `
+    <tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:10px 14px;font-weight:600;color:${mealColors[m.meal]||'var(--text)'};white-space:nowrap">${m.meal}</td>
+      <td style="padding:10px 14px;color:var(--text)">${m.dish}</td>
+      <td style="padding:10px 14px">
+        <a href="${buildYoutubeUrl(m.dish)}" target="_blank" rel="noopener"
+           style="color:var(--green);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px">
+          ▶ Watch Recipe
+        </a>
+      </td>
+    </tr>`).join('');
+  openModal('modal-recipes');
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
