@@ -1,0 +1,1731 @@
+<title>Menu Planner</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green: #2A5240;
+  --green-dk: #1A3528;
+  --green-md: #3D7358;
+  --green-lt: #EBF3EE;
+  --green-xl: #F4F8F5;
+  --amber: #C8762A;
+  --amber-lt: #FDF0E5;
+  --red: #C04040;
+  --red-lt: #FFF0F0;
+  --bg: #F2F4F1;
+  --surface: #FFFFFF;
+  --border: #DDE5DF;
+  --border-lt: #EEF2EE;
+  --text: #18261E;
+  --text-2: #456056;
+  --text-3: #8AA898;
+  --r: 12px; --r-sm: 8px;
+  --shadow: 0 1px 6px rgba(26,53,40,0.08), 0 2px 16px rgba(26,53,40,0.04);
+  --shadow-md: 0 4px 24px rgba(26,53,40,0.12);
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+html { font-size: 15px; }
+body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ─── SCREENS ─── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ─── HOME ─── */
+.home-wrap {
+  max-width: 580px; margin: 0 auto; padding: 60px 24px 80px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.home-logo { margin-bottom: 8px; }
+.home-logo-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: var(--green); display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 14px; font-size: 22px;
+}
+.home-title { font-size: 36px; font-weight: 800; letter-spacing: -1px; color: var(--green); text-align: center; }
+.home-sub { font-size: 15px; color: var(--text-3); margin-top: 6px; text-align: center; }
+.home-card {
+  background: var(--surface); border-radius: var(--r);
+  border: 1px solid var(--border); box-shadow: var(--shadow);
+  padding: 28px; width: 100%; margin-top: 36px;
+}
+.form-field { margin-bottom: 20px; }
+.form-label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 13px; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; letter-spacing: 0.1px;
+}
+.form-label .lbl-icon { font-size: 16px; }
+
+/* Custom select */
+.custom-select { position: relative; }
+.select-trigger {
+  width: 100%; padding: 12px 16px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 14.5px; color: var(--text); cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: border-color 0.15s; user-select: none;
+}
+.select-trigger:hover, .select-trigger:focus { border-color: var(--green); outline: none; }
+.select-trigger.open { border-color: var(--green); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.select-trigger .placeholder { color: var(--text-3); }
+.select-chevron { font-size: 11px; color: var(--text-3); transition: transform 0.2s; }
+.select-trigger.open .select-chevron { transform: rotate(180deg); }
+
+.select-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+  background: var(--surface); border: 1.5px solid var(--green);
+  border-top: none; border-bottom-left-radius: var(--r-sm); border-bottom-right-radius: var(--r-sm);
+  box-shadow: var(--shadow-md); max-height: 240px; overflow-y: auto; display: none;
+}
+.select-dropdown.open { display: block; }
+.select-option {
+  padding: 11px 16px; font-size: 14.5px; cursor: pointer;
+  transition: background 0.1s; display: flex; align-items: center; gap: 10px;
+}
+.select-option:hover { background: var(--green-lt); }
+.select-option.selected { background: var(--green-lt); font-weight: 600; color: var(--green); }
+.select-option.add-new {
+  color: var(--green); font-weight: 600; border-top: 1px solid var(--border-lt);
+  padding-top: 12px;
+}
+.select-option .opt-avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--green-lt);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--green); flex-shrink: 0;
+}
+
+/* Week picker */
+.week-input {
+  width: 100%; padding: 12px 16px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 14.5px; color: var(--text); display: flex;
+  align-items: center; justify-content: space-between;
+}
+.week-input-text { flex: 1; }
+.week-nav-btns { display: flex; gap: 4px; }
+.week-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 13px; color: var(--text-2); transition: all 0.12s;
+}
+.week-btn:hover { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: var(--r);
+  padding: 32px 24px; text-align: center; cursor: pointer;
+  transition: all 0.2s; background: var(--green-xl);
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--green); background: var(--green-lt);
+}
+.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 5; }
+.upload-icon {
+  width: 44px; height: 44px; margin: 0 auto 12px;
+  background: var(--green-lt); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: var(--green);
+}
+.upload-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.upload-sub { font-size: 13px; color: var(--text-3); }
+.upload-file-chosen {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: var(--green-lt); border-radius: var(--r-sm); margin-top: 14px;
+  font-size: 13px; font-weight: 600; color: var(--green);
+}
+.upload-file-remove {
+  margin-left: auto; cursor: pointer; color: var(--text-3); font-size: 14px;
+  padding: 2px 6px; border-radius: 4px;
+}
+.upload-file-remove:hover { background: rgba(0,0,0,0.06); }
+
+.upload-formats {
+  padding: 10px 14px; border-radius: var(--r-sm); border: 1px solid var(--border-lt);
+  background: var(--surface); font-size: 12px; color: var(--text-3); text-align: center;
+  margin-top: 10px;
+}
+.template-link {
+  color: var(--green); font-weight: 600; cursor: pointer; text-decoration: underline;
+  text-decoration-color: rgba(42,82,64,0.3);
+}
+
+.home-btn {
+  width: 100%; padding: 14px; border-radius: var(--r-sm);
+  background: var(--green); color: #fff; font-size: 15px; font-weight: 700;
+  border: none; cursor: pointer; transition: background 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 4px;
+}
+.home-btn:hover { background: var(--green-dk); }
+.home-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ─── PLAN SCREEN ─── */
+.plan-header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 28px; height: 58px; display: flex; align-items: center;
+  gap: 16px; position: sticky; top: 0; z-index: 20;
+}
+.back-btn {
+  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+  border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2);
+  transition: all 0.12s;
+}
+.back-btn:hover { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+
+.plan-header-name { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; flex: 1; }
+.plan-header-week {
+  display: flex; align-items: center; gap: 8px;
+}
+.plan-week-label {
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  min-width: 150px; text-align: center;
+}
+.header-actions { display: flex; gap: 8px; }
+
+.btn {
+  padding: 7px 14px; border-radius: var(--r-sm); font-size: 13px;
+  font-weight: 600; border: none; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-outline { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { background: var(--green-dk); }
+.btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-amber { background: var(--amber); color: #fff; }
+.btn-amber:hover { background: #a85e20; }
+
+/* Plan body */
+.plan-body { padding: 28px; max-width: 1300px; margin: 0 auto; }
+
+.plan-toolbar {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.plan-toolbar-left { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.selection-info {
+  font-size: 13px; color: var(--text-2); font-weight: 500;
+  padding: 6px 12px; background: var(--green-lt); border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+/* Day grid */
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) { .day-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 580px) { .day-grid { grid-template-columns: 1fr; } }
+
+/* Day card */
+.day-card {
+  background: var(--surface); border-radius: var(--r);
+  border: 1.5px solid var(--border); box-shadow: var(--shadow);
+  overflow: hidden; transition: all 0.15s;
+  cursor: pointer; position: relative;
+}
+.day-card:hover { box-shadow: var(--shadow-md); }
+.day-card.selected {
+  border-color: var(--green); box-shadow: 0 0 0 3px rgba(42,82,64,0.12), var(--shadow);
+}
+
+.day-card-header {
+  padding: 14px 16px 12px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  border-bottom: 1px solid var(--border-lt);
+}
+.day-card-name { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; color: var(--text); }
+.day-card-date { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.day-check {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 13px; transition: all 0.15s;
+}
+.day-card.selected .day-check {
+  background: var(--green); border-color: var(--green); color: #fff;
+}
+
+/* Meal rows */
+.meal-row-item {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border-lt);
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.meal-row-item:last-child { border-bottom: none; }
+.meal-row-left { min-width: 80px; }
+.meal-type-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.meal-type-label.breakfast { color: var(--amber); }
+.meal-type-label.lunch { color: var(--green); }
+.meal-type-label.dinner { color: #5A3A8C; }
+.meal-servings {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--text-3); margin-top: 3px; font-weight: 500;
+}
+.meal-dish {
+  font-size: 13.5px; color: var(--text); font-weight: 500; line-height: 1.4;
+  flex: 1; min-height: 20px;
+}
+.meal-dish.empty { color: var(--text-3); font-style: italic; font-weight: 400; }
+.meal-edit-btn {
+  opacity: 0; width: 24px; height: 24px; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text-3); flex-shrink: 0; transition: all 0.12s;
+}
+.meal-row-item:hover .meal-edit-btn { opacity: 1; }
+.meal-edit-btn:hover { background: var(--green-lt); color: var(--green); border-color: var(--green); }
+
+/* ─── MODAL ─── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(18,30,22,0.5);
+  z-index: 100; display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(3px);
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 14px;
+  box-shadow: var(--shadow-md); animation: modal-in 0.2s cubic-bezier(0.4,0,0.2,1);
+  width: 440px; max-width: calc(100vw - 32px); max-height: 85vh; overflow-y: auto;
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.modal-header {
+  padding: 20px 22px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--surface); z-index: 1;
+}
+.modal-title { font-size: 16px; font-weight: 800; letter-spacing: -0.2px; }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 50%; border: none;
+  background: var(--bg); cursor: pointer; font-size: 15px; color: var(--text-2);
+  display: flex; align-items: center; justify-content: center; transition: background 0.12s;
+}
+.modal-close:hover { background: var(--border); }
+.modal-body { padding: 20px 22px; }
+.modal-footer {
+  padding: 14px 22px; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 8px;
+}
+
+/* Form inputs in modal */
+.input {
+  width: 100%; padding: 10px 13px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 14px; color: var(--text); transition: border-color 0.15s;
+  font-family: inherit;
+}
+.input:focus { outline: none; border-color: var(--green); }
+.input-label {
+  font-size: 12px; font-weight: 700; color: var(--text-2);
+  margin-bottom: 5px; letter-spacing: 0.2px;
+}
+.field-group { margin-bottom: 14px; }
+
+/* Toast */
+.toast-stack {
+  position: fixed; bottom: 20px; right: 20px; z-index: 200;
+  display: flex; flex-direction: column; gap: 6px; pointer-events: none;
+}
+.toast {
+  background: var(--text); color: #fff; padding: 11px 16px;
+  border-radius: var(--r-sm); font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 8px;
+  animation: toast-in 0.2s ease;
+}
+@keyframes toast-in { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:none; } }
+@keyframes toast-out { to { opacity:0; transform:translateX(16px); height:0; padding:0; margin:0; overflow:hidden; } }
+.toast.out { animation: toast-out 0.2s ease forwards; }
+
+/* Empty state */
+.empty-plan {
+  grid-column: 1/-1; text-align: center; padding: 60px 20px;
+  color: var(--text-3);
+}
+.empty-plan-icon { font-size: 48px; margin-bottom: 14px; }
+.empty-plan-title { font-size: 17px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; }
+.empty-plan-sub { font-size: 14px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+/* Export preview */
+.export-day-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.export-day-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border: 1.5px solid var(--border); border-radius: var(--r-sm); cursor: pointer;
+  transition: all 0.12s;
+}
+.export-day-item:hover { border-color: var(--green); background: var(--green-lt); }
+.export-day-item.selected { border-color: var(--green); background: var(--green-lt); }
+.export-day-item input[type=checkbox] { accent-color: var(--green); width: 16px; height: 16px; cursor: pointer; }
+.export-day-label { font-size: 14px; font-weight: 600; flex: 1; }
+.export-day-count { font-size: 12px; color: var(--text-3); }
+
+/* Inline export strip */
+.export-strip {
+  background: var(--surface); border: 1.5px solid var(--green);
+  border-radius: var(--r); box-shadow: var(--shadow-md);
+  margin-top: 24px; overflow: hidden;
+}
+.export-strip-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; background: var(--green-lt); border-bottom: 1px solid var(--border);
+}
+.export-strip-title { font-size: 13px; font-weight: 700; color: var(--green); }
+.export-strip-hint { font-size: 12px; color: var(--text-2); }
+.export-strip-close {
+  width: 26px; height: 26px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,0.06); cursor: pointer; font-size: 14px;
+  color: var(--text-2); display: flex; align-items: center; justify-content: center;
+}
+.export-strip-close:hover { background: rgba(0,0,0,0.1); }
+.export-strip-body { padding: 12px; background: #e8ece8; text-align: center; }
+.export-strip-body img {
+  max-width: 100%; border-radius: var(--r-sm); box-shadow: var(--shadow);
+}
+
+/* Upload progress */
+.parse-status {
+  padding: 12px 14px; border-radius: var(--r-sm); margin-top: 12px;
+  font-size: 13px; font-weight: 600; display: none; align-items: center; gap: 8px;
+}
+.parse-status.success { background: #EBF3EE; color: var(--green); display: flex; }
+.parse-status.error { background: var(--red-lt); color: var(--red); display: flex; }
+
+/* Template modal table */
+.tpl-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r-sm); }
+.tpl-table {
+  width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums;
+}
+.tpl-table th {
+  background: var(--green); color: #fff; text-align: left;
+  padding: 8px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase; white-space: nowrap;
+}
+.tpl-table td { padding: 7px 10px; border-bottom: 1px solid var(--border-lt); color: var(--text); }
+.tpl-table tr:last-child td { border-bottom: none; }
+.tpl-table tr:nth-child(even) td { background: var(--green-xl); }
+.tpl-table td.empty { color: var(--text-3); font-style: italic; }
+.tpl-actions {
+  display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end;
+}
+.tpl-hint {
+  font-size: 12.5px; color: var(--text-3); margin-bottom: 12px; line-height: 1.5;
+}
+.copy-ok { color: var(--green); font-weight: 600; font-size: 13px; display: none; align-items: center; gap: 4px; }
+</style>
+
+<!-- ── SCREEN: HOME ─────────────────────────── -->
+<div class="screen active" id="screen-home">
+  <div class="home-wrap">
+    <div class="home-logo">
+      <div class="home-logo-icon">🍽</div>
+    </div>
+    <h1 class="home-title">Menu Planner</h1>
+    <p class="home-sub">Upload your weekly menu and customise it</p>
+
+    <div class="home-card">
+      <!-- House selector -->
+      <div class="form-field">
+        <div class="form-label"><span class="lbl-icon">🏠</span> House Name</div>
+        <div class="custom-select" id="house-select-wrap">
+          <div class="select-trigger" id="house-trigger" tabindex="0"
+               onclick="toggleHouseSelect()" onkeydown="if(event.key==='Enter'||event.key===' ')toggleHouseSelect()">
+            <span id="house-trigger-text" class="placeholder">Select a house…</span>
+            <span class="select-chevron">▾</span>
+          </div>
+          <div class="select-dropdown" id="house-dropdown">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Week picker -->
+      <div class="form-field">
+        <div class="form-label"><span class="lbl-icon">📅</span> Week</div>
+        <div class="week-input">
+          <div class="week-input-text" id="home-week-label">Week 26, 2026</div>
+          <div class="week-nav-btns">
+            <button class="week-btn" onclick="homeWeekNav(-1)" title="Previous week">‹</button>
+            <button class="week-btn" onclick="homeWeekNav(1)" title="Next week">›</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- File upload -->
+      <div class="form-field">
+        <div class="form-label"><span class="lbl-icon">📊</span> Upload Menu (Excel / CSV)</div>
+        <div class="upload-zone" id="upload-zone"
+             ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv"
+                 onchange="onFileSelect(event)" onclick="event.stopPropagation()">
+          <div class="upload-icon">📤</div>
+          <div class="upload-title">Upload Menu Spreadsheet</div>
+          <div class="upload-sub">Drag &amp; drop or click to browse</div>
+          <div id="file-chosen" style="display:none" class="upload-file-chosen">
+            <span>📄</span>
+            <span id="file-chosen-name"></span>
+            <span class="upload-file-remove" onclick="clearFile(event)">✕</span>
+          </div>
+        </div>
+        <div class="parse-status" id="parse-status"></div>
+        <div class="upload-formats">
+          Supported: .xlsx · .csv &nbsp;·&nbsp;
+          <span class="template-link" onclick="downloadTemplate()">Download template</span>
+        </div>
+      </div>
+
+      <button class="home-btn" id="go-btn" onclick="goToPlan()" disabled>
+        View Meal Plan →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: PLAN ─────────────────────────── -->
+<div class="screen" id="screen-plan">
+  <div class="plan-header">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <div class="plan-header-name" id="plan-header-name">House Name</div>
+    <div class="plan-header-week">
+      <button class="week-btn" onclick="planWeekNav(-1)">‹</button>
+      <div class="plan-week-label" id="plan-week-label">Jun 22 – Jun 28</div>
+      <button class="week-btn" onclick="planWeekNav(1)">›</button>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="openUploadModal()">📤 Import</button>
+      <button class="btn btn-outline" onclick="openExportModal()">⬇ Export</button>
+    </div>
+  </div>
+
+  <div class="plan-body">
+    <div class="plan-toolbar">
+      <div class="plan-toolbar-left">
+        <div class="selection-info" id="selection-info" style="display:none">
+          <span id="selection-count">0</span> day(s) selected
+        </div>
+      </div>
+      <button class="btn btn-green" id="download-selected-btn"
+              style="display:none" onclick="openExportModal()">
+        ⬇ Download Selected
+      </button>
+      <button class="btn btn-outline" onclick="selectAll()">Select All</button>
+      <button class="btn btn-outline" onclick="clearSelection()">Deselect</button>
+      <button class="btn btn-outline" onclick="openUploadModal()">✏️ Edit Plan</button>
+    </div>
+    <div class="day-grid" id="day-grid">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Add Customer ──────────────────── -->
+<div class="modal-backdrop" id="modal-add-customer" onclick="closeModalBackdrop(event,'modal-add-customer')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New House</div>
+      <button class="modal-close" onclick="closeModal('modal-add-customer')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <div class="input-label">House / Customer Name</div>
+        <input class="input" id="new-customer-input" type="text" placeholder="e.g. Antra &amp; Harshit"
+               onkeydown="if(event.key==='Enter')confirmAddCustomer()">
+      </div>
+      <div class="field-group">
+        <div class="input-label">Members (optional)</div>
+        <input class="input" id="new-customer-members" type="number" min="1" max="20" placeholder="2" value="2">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-customer')">Cancel</button>
+      <button class="btn btn-green" onclick="confirmAddCustomer()">Add House</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Edit Meal ─────────────────────── -->
+<div class="modal-backdrop" id="modal-edit-meal" onclick="closeModalBackdrop(event,'modal-edit-meal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="edit-modal-title">Edit Meal</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-meal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <div class="input-label">Dish / Description</div>
+        <textarea class="input" id="edit-meal-dish" rows="3"
+          placeholder="e.g. Dal tadka + jeera rice (5 cups)&#10;Soak chole overnight"
+          style="resize:vertical;line-height:1.5"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="input-label">Servings</div>
+        <input class="input" id="edit-meal-servings" type="number" min="1" max="50" value="2">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="clearMealEdit()">Clear</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-meal')">Cancel</button>
+      <button class="btn btn-green" onclick="confirmEditMeal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Export ────────────────────────── -->
+<div class="modal-backdrop" id="modal-export" onclick="closeModalBackdrop(event,'modal-export')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Export Meal Plan</div>
+      <button class="modal-close" onclick="closeModal('modal-export')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13.5px;color:var(--text-2);margin-bottom:14px">
+        Select the days to include in the export.
+      </p>
+      <div class="export-day-list" id="export-day-list">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="toggleExportAll()">Select All</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-export')">Cancel</button>
+      <button class="btn btn-green" onclick="doExport()">⬇ Download</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Import (in plan) ──────────────── -->
+<div class="modal-backdrop" id="modal-import" onclick="closeModalBackdrop(event,'modal-import')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Import Menu</div>
+      <button class="modal-close" onclick="closeModal('modal-import')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="upload-zone" id="import-upload-zone"
+           ondragover="onDragOver2(event)" ondragleave="onDragLeave2(event)" ondrop="onDrop2(event)"
+           style="padding:24px 20px">
+        <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv"
+               onchange="onImportFileSelect(event)" onclick="event.stopPropagation()">
+        <div class="upload-icon" style="width:36px;height:36px;font-size:17px">📤</div>
+        <div class="upload-title" style="font-size:14px">Drop file here</div>
+        <div class="upload-sub">Excel or CSV</div>
+        <div id="import-file-chosen" style="display:none" class="upload-file-chosen">
+          <span>📄</span>
+          <span id="import-file-name"></span>
+          <span class="upload-file-remove" onclick="clearImportFile(event)">✕</span>
+        </div>
+      </div>
+      <div class="parse-status" id="import-parse-status"></div>
+      <div class="upload-formats" style="margin-top:10px">
+        <span class="template-link" onclick="downloadTemplate()">Download template</span>
+        &nbsp;·&nbsp; Columns: Day · Meal · Dish · Servings · Notes
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-import')">Cancel</button>
+      <button class="btn btn-green" id="import-confirm-btn" disabled onclick="confirmImport()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Canvas Preview ─────────────── -->
+<div class="modal-backdrop" id="modal-canvas-preview" onclick="closeModalBackdrop(event,'modal-canvas-preview')">
+  <div class="modal" style="width:700px">
+    <div class="modal-header">
+      <div class="modal-title">Meal Plan Image</div>
+      <button class="modal-close" onclick="closeModal('modal-canvas-preview')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <div class="canvas-preview-scroll" id="canvas-preview-scroll">
+        <div class="generating-spinner" id="canvas-spinner">
+          <div class="spinner-ring"></div>
+          <span>Generating image…</span>
+        </div>
+        <img id="canvas-preview-img" alt="Meal plan export" style="display:none">
+      </div>
+      <div class="canvas-hint" id="canvas-hint" style="display:none">
+        📱 <strong>Mobile:</strong> Long-press the image → Save to Photos &nbsp;·&nbsp;
+        🖥 <strong>Desktop:</strong> Right-click the image → Save image as…
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-canvas-preview')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Template ────────────────────── -->
+<div class="modal-backdrop" id="modal-template" onclick="closeModalBackdrop(event,'modal-template')">
+  <div class="modal" style="width:600px">
+    <div class="modal-header">
+      <div class="modal-title">CSV Template</div>
+      <button class="modal-close" onclick="closeModal('modal-template')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="tpl-hint">
+        Your spreadsheet needs these columns: <strong>Day</strong>, <strong>Meal</strong>,
+        <strong>Dish</strong>, <strong>Servings</strong>, and optionally <strong>Notes</strong>.<br>
+        Copy the table below and paste into Excel or Google Sheets.
+      </p>
+      <div class="tpl-table-wrap">
+        <table class="tpl-table" id="tpl-table">
+          <thead><tr><th>Day</th><th>Meal</th><th>Dish</th><th>Servings</th><th>Notes</th></tr></thead>
+          <tbody id="tpl-tbody"></tbody>
+        </table>
+      </div>
+      <div class="tpl-actions">
+        <span class="copy-ok" id="copy-ok">✓ Copied</span>
+        <button class="btn btn-outline" onclick="copyTemplateCSV()">📋 Copy as CSV</button>
+        <button class="btn btn-green" onclick="copyTemplateTable()">📋 Copy Table</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-stack" id="toast-stack"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const DAYS_OF_WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+let state = {
+  customers: [
+    {id:'c1', name:'Akhil', members:1},
+    {id:'c2', name:'Antra & Harshit', members:2},
+    {id:'c3', name:'Ashish & Vaibhavi', members:2},
+    {id:'c4', name:'Disha & Anirudh', members:2},
+    {id:'c5', name:'Ishita & Harsh', members:3},
+    {id:'c6', name:'Jiya & Khushi', members:2},
+    {id:'c7', name:'Pooja & Rahul', members:3},
+  ],
+  plans: {}, // {customerId: {weekKey: {0:{b,l,d}, 1:...}}} day 0=Mon
+  currentCustomerId: null,
+  homeWeekOffset: 0,
+  planWeekOffset: 0,
+  selectedDays: new Set(),
+  selectedExportDays: new Set(),
+  selectedHouseId: null,
+  pendingImportData: null,
+  editTarget: null, // {dayIdx, meal}
+  importContext: 'home', // 'home' | 'plan'
+};
+
+// Persist
+function saveState() {
+  try { localStorage.setItem('menuPlanner_v2', JSON.stringify({customers:state.customers, plans:state.plans})); }
+  catch(e){}
+}
+function loadState() {
+  try {
+    const d = JSON.parse(localStorage.getItem('menuPlanner_v2')||'null');
+    if (d) { state.customers = d.customers||state.customers; state.plans = d.plans||{}; }
+  } catch(e){}
+}
+
+// ─── WEEK HELPERS ─────────────────────────────────────────────────────────────
+function getWeekStart(offset) {
+  // Base: week of Jun 22 2026 (Monday)
+  const base = new Date(2026, 5, 22);
+  base.setDate(base.getDate() + offset * 7);
+  return base;
+}
+
+function weekDates(offset) {
+  const start = getWeekStart(offset);
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(start); d.setDate(d.getDate()+i); return d;
+  });
+}
+
+function weekLabel(offset) {
+  const d = weekDates(offset);
+  const s = d[0], e = d[6];
+  return `${MONTHS[s.getMonth()]} ${s.getDate()} – ${MONTHS[e.getMonth()]} ${e.getDate()}`;
+}
+
+function weekKeyOf(offset) {
+  const d = getWeekStart(offset);
+  return `${d.getFullYear()}-W${Math.ceil((d.getDate()+new Date(d.getFullYear(),0,1).getDay())/7)}`;
+}
+
+function isoWeekKey(offset) {
+  const d = getWeekStart(offset);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function weekNum(offset) {
+  const d = getWeekStart(offset);
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+}
+
+function homeWeekLabel() {
+  return `Week ${weekNum(state.homeWeekOffset)}, ${getWeekStart(state.homeWeekOffset).getFullYear()}`;
+}
+
+// ─── HOME RENDER ──────────────────────────────────────────────────────────────
+function renderHomeHouseDropdown() {
+  const dd = document.getElementById('house-dropdown');
+  dd.innerHTML = state.customers.map(c => `
+    <div class="select-option ${state.selectedHouseId===c.id?'selected':''}"
+         onclick="selectHouse('${c.id}')">
+      <div class="opt-avatar">${initials(c.name)}</div>
+      ${c.name}
+    </div>`).join('') +
+    `<div class="select-option add-new" onclick="openAddCustomer()">
+      <div class="opt-avatar" style="background:var(--amber-lt);color:var(--amber)">+</div>
+      Add new house
+    </div>`;
+}
+
+function initials(name) {
+  return name.split(/\s+&?\s*/).filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join('');
+}
+
+function toggleHouseSelect() {
+  const trigger = document.getElementById('house-trigger');
+  const dd = document.getElementById('house-dropdown');
+  const isOpen = dd.classList.contains('open');
+  if (!isOpen) { renderHomeHouseDropdown(); }
+  trigger.classList.toggle('open');
+  dd.classList.toggle('open');
+}
+
+function selectHouse(id) {
+  state.selectedHouseId = id;
+  const c = state.customers.find(x=>x.id===id);
+  const trigger = document.getElementById('house-trigger');
+  trigger.classList.remove('open');
+  document.getElementById('house-dropdown').classList.remove('open');
+  trigger.innerHTML = `<span style="display:flex;align-items:center;gap:8px">
+    <span class="opt-avatar" style="width:22px;height:22px;font-size:10px;background:var(--green-lt);color:var(--green);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700">${initials(c.name)}</span>
+    ${c.name}
+  </span><span class="select-chevron">▾</span>`;
+  updateGoBtn();
+}
+
+function homeWeekNav(dir) {
+  state.homeWeekOffset += dir;
+  document.getElementById('home-week-label').textContent = homeWeekLabel();
+  updateGoBtn();
+}
+
+function updateGoBtn() {
+  document.getElementById('go-btn').disabled = !state.selectedHouseId;
+}
+
+// ─── ADD CUSTOMER ─────────────────────────────────────────────────────────────
+function openAddCustomer() {
+  document.getElementById('house-trigger').classList.remove('open');
+  document.getElementById('house-dropdown').classList.remove('open');
+  document.getElementById('new-customer-input').value = '';
+  document.getElementById('new-customer-members').value = '2';
+  openModal('modal-add-customer');
+  setTimeout(() => document.getElementById('new-customer-input').focus(), 100);
+}
+
+function confirmAddCustomer() {
+  const name = document.getElementById('new-customer-input').value.trim();
+  const members = parseInt(document.getElementById('new-customer-members').value)||2;
+  if (!name) { toast('Enter a house name','!'); return; }
+  if (state.customers.find(c=>c.name.toLowerCase()===name.toLowerCase())) {
+    toast('House already exists','!'); return;
+  }
+  const id = 'c' + Date.now();
+  state.customers.push({id, name, members});
+  saveState();
+  closeModal('modal-add-customer');
+  selectHouse(id);
+  toast(`"${name}" added ✓`);
+}
+
+// ─── PLAN SCREEN ──────────────────────────────────────────────────────────────
+function goToPlan() {
+  if (!state.selectedHouseId) return;
+  state.currentCustomerId = state.selectedHouseId;
+  state.planWeekOffset = state.homeWeekOffset;
+  state.selectedDays = new Set();
+  showScreen('screen-plan');
+  renderPlanHeader();
+  renderDayGrid();
+}
+
+function goHome() {
+  showScreen('screen-home');
+  state.currentCustomerId = null;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function renderPlanHeader() {
+  const c = state.customers.find(x=>x.id===state.currentCustomerId);
+  document.getElementById('plan-header-name').textContent = c?.name || '';
+  document.getElementById('plan-week-label').textContent = weekLabel(state.planWeekOffset);
+}
+
+function planWeekNav(dir) {
+  state.planWeekOffset += dir;
+  state.selectedDays = new Set();
+  renderPlanHeader();
+  renderDayGrid();
+  updateSelectionUI();
+}
+
+function getPlan(customerId, weekOffset) {
+  const key = isoWeekKey(weekOffset);
+  if (!state.plans[customerId]) state.plans[customerId] = {};
+  if (!state.plans[customerId][key]) {
+    state.plans[customerId][key] = Array.from({length:7}, () => ({
+      breakfast:{dish:'',servings:2}, lunch:{dish:'',servings:2}, dinner:{dish:'',servings:3}
+    }));
+  }
+  return state.plans[customerId][key];
+}
+
+function renderDayGrid() {
+  const grid = document.getElementById('day-grid');
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  const dates = weekDates(state.planWeekOffset);
+  const hasMeals = plan.some(d => d.breakfast.dish || d.lunch.dish || d.dinner.dish);
+
+  if (!hasMeals) {
+    grid.innerHTML = `<div class="empty-plan">
+      <div class="empty-plan-icon">📋</div>
+      <div class="empty-plan-title">No meals planned yet</div>
+      <div class="empty-plan-sub">Upload an Excel/CSV file or click a meal slot to add manually.</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = plan.map((day, i) => {
+    const sel = state.selectedDays.has(i);
+    const dt = dates[i];
+    return `<div class="day-card ${sel?'selected':''}" onclick="toggleDaySelect(${i})">
+      <div class="day-card-header">
+        <div>
+          <div class="day-card-name">${DAYS_OF_WEEK[i]}</div>
+          <div class="day-card-date">${MONTHS[dt.getMonth()]} ${dt.getDate()}</div>
+        </div>
+        <div class="day-check">${sel?'✓':''}</div>
+      </div>
+      ${['breakfast','lunch','dinner'].map(m => `
+        <div class="meal-row-item">
+          <div class="meal-row-left">
+            <div class="meal-type-label ${m}">${m.toUpperCase()}</div>
+            <div class="meal-servings">👥 ${day[m].servings||2}</div>
+          </div>
+          <div class="meal-dish ${day[m].dish?'':'empty'}" style="white-space:pre-wrap">${
+            day[m].dish || 'No meal set'}</div>
+          <button class="meal-edit-btn" onclick="editMeal(event,${i},'${m}')" title="Edit">✏</button>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function toggleDaySelect(idx) {
+  if (state.selectedDays.has(idx)) state.selectedDays.delete(idx);
+  else state.selectedDays.add(idx);
+  renderDayGrid();
+  updateSelectionUI();
+}
+
+function selectAll() {
+  state.selectedDays = new Set([0,1,2,3,4,5,6]);
+  renderDayGrid(); updateSelectionUI();
+}
+
+function clearSelection() {
+  state.selectedDays = new Set();
+  renderDayGrid(); updateSelectionUI();
+}
+
+function updateSelectionUI() {
+  const n = state.selectedDays.size;
+  const info = document.getElementById('selection-info');
+  const btn = document.getElementById('download-selected-btn');
+  document.getElementById('selection-count').textContent = n;
+  info.style.display = n > 0 ? 'block' : 'none';
+  btn.style.display = n > 0 ? 'flex' : 'none';
+}
+
+// ─── EDIT MEAL ────────────────────────────────────────────────────────────────
+function editMeal(event, dayIdx, meal) {
+  event.stopPropagation();
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  const data = plan[dayIdx][meal];
+  state.editTarget = {dayIdx, meal};
+  document.getElementById('edit-modal-title').textContent =
+    `Edit ${meal.charAt(0).toUpperCase()+meal.slice(1)} — ${DAYS_OF_WEEK[dayIdx]}`;
+  document.getElementById('edit-meal-dish').value = data.dish||'';
+  document.getElementById('edit-meal-servings').value = data.servings||2;
+  openModal('modal-edit-meal');
+  setTimeout(()=>document.getElementById('edit-meal-dish').focus(),100);
+}
+
+function clearMealEdit() {
+  document.getElementById('edit-meal-dish').value = '';
+}
+
+function confirmEditMeal() {
+  const dish = document.getElementById('edit-meal-dish').value.trim();
+  const servings = parseInt(document.getElementById('edit-meal-servings').value)||2;
+  const {dayIdx, meal} = state.editTarget;
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  plan[dayIdx][meal] = {dish, servings};
+  saveState();
+  closeModal('modal-edit-meal');
+  renderDayGrid();
+  toast('Meal updated');
+}
+
+// ─── UPLOAD / IMPORT ──────────────────────────────────────────────────────────
+let homeFileData = null;
+let importFileData = null;
+
+function onDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+function onDragLeave(e) { document.getElementById('upload-zone').classList.remove('dragover'); }
+function onDrop(e) {
+  e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleHomeFile(e.dataTransfer.files[0]);
+}
+function onDragOver2(e) { e.preventDefault(); document.getElementById('import-upload-zone').classList.add('dragover'); }
+function onDragLeave2(e) { document.getElementById('import-upload-zone').classList.remove('dragover'); }
+function onDrop2(e) {
+  e.preventDefault(); document.getElementById('import-upload-zone').classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0]);
+}
+
+function onFileSelect(event) { if(event.target.files[0]) handleHomeFile(event.target.files[0]); }
+function onImportFileSelect(event) { if(event.target.files[0]) handleImportFile(event.target.files[0]); }
+
+async function handleHomeFile(file) {
+  showFileChosen('file-chosen', 'file-chosen-name', file.name);
+  const status = document.getElementById('parse-status');
+  status.className = 'parse-status'; status.style.display='flex';
+  status.innerHTML = '⏳ Parsing…';
+  try {
+    const data = await parseFile(file);
+    homeFileData = data;
+    state.pendingImportData = data;
+    status.className = 'parse-status success';
+    status.innerHTML = `✓ Found ${countMeals(data)} meals across ${countDays(data)} days`;
+    updateGoBtn();
+  } catch(e) {
+    status.className = 'parse-status error';
+    status.innerHTML = '✗ ' + e.message;
+    homeFileData = null;
+  }
+}
+
+async function handleImportFile(file) {
+  showFileChosen('import-file-chosen', 'import-file-name', file.name);
+  const status = document.getElementById('import-parse-status');
+  const btn = document.getElementById('import-confirm-btn');
+  status.className = 'parse-status'; status.style.display='flex';
+  status.innerHTML = '⏳ Parsing…';
+  btn.disabled = true;
+  try {
+    const data = await parseFile(file);
+    importFileData = data;
+    status.className = 'parse-status success';
+    status.innerHTML = `✓ Found ${countMeals(data)} meals across ${countDays(data)} days`;
+    btn.disabled = false;
+  } catch(e) {
+    status.className = 'parse-status error';
+    status.innerHTML = '✗ ' + e.message;
+    importFileData = null;
+  }
+}
+
+function showFileChosen(wrapperId, nameId, name) {
+  document.getElementById(wrapperId).style.display='flex';
+  document.getElementById(nameId).textContent = name;
+}
+
+function clearFile(e) {
+  e.stopPropagation();
+  document.getElementById('file-chosen').style.display='none';
+  document.getElementById('file-input').value='';
+  document.getElementById('parse-status').className='parse-status';
+  homeFileData=null; state.pendingImportData=null;
+}
+
+function clearImportFile(e) {
+  e.stopPropagation();
+  document.getElementById('import-file-chosen').style.display='none';
+  document.getElementById('import-file-input').value='';
+  document.getElementById('import-parse-status').className='parse-status';
+  document.getElementById('import-confirm-btn').disabled=true;
+  importFileData=null;
+}
+
+function openUploadModal() {
+  document.getElementById('import-file-chosen').style.display='none';
+  document.getElementById('import-parse-status').className='parse-status';
+  document.getElementById('import-confirm-btn').disabled=true;
+  importFileData=null;
+  openModal('modal-import');
+}
+
+function confirmImport() {
+  if (!importFileData) return;
+  applyPlanData(state.currentCustomerId, state.planWeekOffset, importFileData);
+  closeModal('modal-import');
+  renderDayGrid();
+  toast(`Plan imported — ${countMeals(importFileData)} meals`);
+}
+
+function applyPlanData(customerId, weekOffset, data) {
+  const key = isoWeekKey(weekOffset);
+  if (!state.plans[customerId]) state.plans[customerId]={};
+  // Initialize empty week
+  const week = Array.from({length:7}, ()=>({
+    breakfast:{dish:'',servings:2}, lunch:{dish:'',servings:2}, dinner:{dish:'',servings:3}
+  }));
+  for (const row of data) {
+    const di = DAYS_OF_WEEK.map(d=>d.toLowerCase()).indexOf(row.day.toLowerCase());
+    if (di < 0) continue;
+    const mealKey = row.meal.toLowerCase();
+    if (!['breakfast','lunch','dinner'].includes(mealKey)) continue;
+    const existing = week[di][mealKey];
+    const dish = existing.dish ? existing.dish + '\n' + row.dish : row.dish;
+    week[di][mealKey] = { dish: dish.trim(), servings: row.servings||existing.servings };
+  }
+  state.plans[customerId][key] = week;
+  saveState();
+}
+
+function countMeals(data) { return data.filter(r=>r.dish).length; }
+function countDays(data) { return new Set(data.map(r=>r.day.toLowerCase())).size; }
+
+// ─── FILE PARSING ─────────────────────────────────────────────────────────────
+async function parseFile(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.csv')) {
+    const text = await file.text();
+    return parseCSV(text);
+  } else if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    const buf = await file.arrayBuffer();
+    return await parseXLSX(buf);
+  }
+  throw new Error('Unsupported file type. Use .xlsx or .csv');
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  if (lines.length < 2) throw new Error('File appears empty');
+  // Parse header
+  const header = splitCSVRow(lines[0]).map(h=>h.trim().toLowerCase());
+  const iDay = header.findIndex(h=>h.includes('day'));
+  const iMeal = header.findIndex(h=>h.includes('meal'));
+  const iDish = header.findIndex(h=>h.includes('dish')||h.includes('menu')||h.includes('food'));
+  const iServ = header.findIndex(h=>h.includes('serv')||h.includes('qty')||h.includes('count')||h.includes('pax'));
+  const iNotes = header.findIndex(h=>h.includes('note'));
+  if (iDay<0||iMeal<0) throw new Error('Missing Day or Meal column. Check column headers.');
+  const rows = [];
+  for (let i=1; i<lines.length; i++) {
+    const cols = splitCSVRow(lines[i]);
+    const day = (cols[iDay]||'').trim();
+    const meal = (cols[iMeal]||'').trim();
+    if (!day || !meal) continue;
+    let dish = iDish>=0 ? (cols[iDish]||'').trim() : '';
+    const notes = iNotes>=0 ? (cols[iNotes]||'').trim() : '';
+    if (notes) dish = dish ? dish + '\n(' + notes + ')' : notes;
+    const servings = iServ>=0 ? parseInt(cols[iServ])||2 : 2;
+    rows.push({day, meal, dish, servings});
+  }
+  if (!rows.length) throw new Error('No data rows found. Check file format.');
+  return rows;
+}
+
+function splitCSVRow(line) {
+  const result=[]; let cur='', inQ=false;
+  for (let i=0; i<line.length; i++) {
+    const c=line[i];
+    if (c==='"') { inQ=!inQ; continue; }
+    if (c===',' && !inQ) { result.push(cur); cur=''; continue; }
+    cur+=c;
+  }
+  result.push(cur);
+  return result;
+}
+
+// ─── XLSX PARSER ─────────────────────────────────────────────────────────────
+async function parseXLSX(buffer) {
+  const bytes = new Uint8Array(buffer);
+  // Extract files from ZIP
+  const zipFiles = {};
+  let i = 0;
+  while (i < bytes.length - 30) {
+    if (bytes[i]===0x50 && bytes[i+1]===0x4B && bytes[i+2]===0x03 && bytes[i+3]===0x04) {
+      const compression = bytes[i+8] | (bytes[i+9]<<8);
+      const compSize = bytes[i+18] | (bytes[i+19]<<8) | (bytes[i+20]<<16) | (bytes[i+21]<<24);
+      const nameLen = bytes[i+26] | (bytes[i+27]<<8);
+      const extraLen = bytes[i+28] | (bytes[i+29]<<8);
+      const filename = new TextDecoder('utf-8').decode(bytes.slice(i+30, i+30+nameLen));
+      const dataStart = i + 30 + nameLen + extraLen;
+      const compData = bytes.slice(dataStart, dataStart + compSize);
+      if (compSize > 0) {
+        if (compression === 0) {
+          zipFiles[filename] = new TextDecoder('utf-8').decode(compData);
+        } else if (compression === 8) {
+          try { zipFiles[filename] = await decompressDeflate(compData); }
+          catch(e) { zipFiles[filename] = null; }
+        }
+      }
+      i = dataStart + Math.max(0, compSize);
+    } else { i++; }
+  }
+
+  // Find shared strings
+  const sharedStrings = [];
+  const ssXml = zipFiles['xl/sharedStrings.xml'] || zipFiles['xl/SharedStrings.xml'];
+  if (ssXml) {
+    const matches = ssXml.matchAll(/<t[^>]*>([^<]*)<\/t>/g);
+    for (const m of matches) sharedStrings.push(decodeXML(m[1]));
+  }
+
+  // Find sheet1
+  const sheetXml = zipFiles['xl/worksheets/sheet1.xml'] || zipFiles['xl/worksheets/Sheet1.xml'];
+  if (!sheetXml) throw new Error('Could not read Excel sheet. Try saving as CSV instead.');
+
+  // Parse cells
+  const rows = {};
+  const cellRegex = /<c r="([A-Z]+)(\d+)"[^>]*(?:t="([^"]*)")?[^>]*>(?:<v>([^<]*)<\/v>)?/g;
+  let m;
+  while ((m = cellRegex.exec(sheetXml)) !== null) {
+    const col = colToIdx(m[1]);
+    const row = parseInt(m[2]) - 1;
+    const type = m[3];
+    const raw = m[4]||'';
+    let val = '';
+    if (type === 's') val = sharedStrings[parseInt(raw)]||'';
+    else if (type === 'inlineStr') {
+      const inlineMatch = sheetXml.slice(m.index).match(/<is><t[^>]*>([^<]*)<\/t>/);
+      val = inlineMatch ? decodeXML(inlineMatch[1]) : raw;
+    }
+    else val = raw;
+    if (!rows[row]) rows[row]={};
+    rows[row][col] = val;
+  }
+
+  const rowKeys = Object.keys(rows).map(Number).sort((a,b)=>a-b);
+  if (rowKeys.length < 2) throw new Error('No data found in Excel file.');
+
+  // Detect header row (row 0)
+  const headerRow = rows[rowKeys[0]] || {};
+  const header = {};
+  for (const [col, val] of Object.entries(headerRow)) {
+    const v = val.toLowerCase().trim();
+    if (v.includes('day')) header.day = parseInt(col);
+    else if (v.includes('meal')) header.meal = parseInt(col);
+    else if (v.includes('dish')||v.includes('menu')||v.includes('food')) header.dish = parseInt(col);
+    else if (v.includes('serv')||v.includes('pax')||v.includes('qty')) header.servings = parseInt(col);
+    else if (v.includes('note')) header.notes = parseInt(col);
+  }
+  if (header.day===undefined || header.meal===undefined) {
+    throw new Error('Missing Day or Meal column. Check column headers.');
+  }
+
+  const result = [];
+  for (let ri = 1; ri < rowKeys.length; ri++) {
+    const row = rows[rowKeys[ri]] || {};
+    const day = (row[header.day]||'').trim();
+    const meal = (row[header.meal]||'').trim();
+    if (!day||!meal) continue;
+    let dish = header.dish!==undefined ? (row[header.dish]||'').trim() : '';
+    const notes = header.notes!==undefined ? (row[header.notes]||'').trim() : '';
+    if (notes) dish = dish ? dish + '\n(' + notes + ')' : notes;
+    const servings = header.servings!==undefined ? parseInt(row[header.servings])||2 : 2;
+    result.push({day, meal, dish, servings});
+  }
+  if (!result.length) throw new Error('No data rows found.');
+  return result;
+}
+
+async function decompressDeflate(data) {
+  const ds = new DecompressionStream('deflate-raw');
+  const writer = ds.writable.getWriter();
+  writer.write(data);
+  writer.close();
+  const reader = ds.readable.getReader();
+  const chunks = [];
+  while (true) {
+    const {value, done} = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const total = chunks.reduce((s,c)=>s+c.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  return new TextDecoder('utf-8').decode(out);
+}
+
+function colToIdx(col) {
+  let n = 0;
+  for (const c of col) n = n * 26 + (c.charCodeAt(0) - 64);
+  return n - 1; // 0-indexed
+}
+
+function decodeXML(s) {
+  return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function openExportModal() {
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  const dates = weekDates(state.planWeekOffset);
+  const c = state.customers.find(x=>x.id===state.currentCustomerId);
+  state.selectedExportDays = new Set(state.selectedDays);
+
+  document.getElementById('export-day-list').innerHTML = DAYS_OF_WEEK.map((day,i) => {
+    const meals = [plan[i].breakfast, plan[i].lunch, plan[i].dinner];
+    const count = meals.filter(m=>m.dish).length;
+    const sel = state.selectedExportDays.has(i);
+    return `<label class="export-day-item ${sel?'selected':''}" id="exp-day-${i}">
+      <input type="checkbox" ${sel?'checked':''} onchange="toggleExportDay(${i},this)"
+             onclick="event.stopPropagation()">
+      <div class="export-day-label">${day} <span style="color:var(--text-3);font-weight:400;font-size:12px">${MONTHS[dates[i].getMonth()]} ${dates[i].getDate()}</span></div>
+      <div class="export-day-count">${count}/3 meals</div>
+    </label>`;
+  }).join('');
+
+  openModal('modal-export');
+}
+
+function toggleExportDay(idx, checkbox) {
+  if (checkbox.checked) state.selectedExportDays.add(idx);
+  else state.selectedExportDays.delete(idx);
+  document.getElementById('exp-day-'+idx).classList.toggle('selected', checkbox.checked);
+}
+
+function toggleExportAll() {
+  const allSelected = state.selectedExportDays.size === 7;
+  if (allSelected) {
+    state.selectedExportDays = new Set();
+  } else {
+    state.selectedExportDays = new Set([0,1,2,3,4,5,6]);
+  }
+  // Re-render the list
+  document.querySelectorAll('#export-day-list .export-day-item').forEach((el,i) => {
+    const sel = state.selectedExportDays.has(i);
+    el.classList.toggle('selected', sel);
+    el.querySelector('input').checked = sel;
+  });
+}
+
+async function doExport() {
+  if (state.selectedExportDays.size === 0) { toast('Select at least one day','!'); return; }
+  const selectedIdx = [...state.selectedExportDays].sort((a,b)=>a-b);
+  closeModal('modal-export');
+
+  try {
+    const c = state.customers.find(x=>x.id===state.currentCustomerId);
+    const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+    const dates = weekDates(state.planWeekOffset);
+
+    const dayNames = selectedIdx.map(i => DAYS_OF_WEEK[i].toLowerCase());
+    const filename = c.name.toLowerCase().replace(/[\s]+/g,'') + '_' + dayNames.join('_') + '.jpg';
+
+    const canvas = buildExportCanvas(c, plan, dates, selectedIdx);
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.93));
+    const file = new File([blob], filename, { type: 'image/jpeg' });
+
+    // Use Web Share API — triggers native OS share/save dialog, bypasses iframe sandbox
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: filename,
+        files: [file]
+      });
+      toast('Shared ' + filename);
+    } else {
+      // Fallback: open image in new tab so user can Cmd/Ctrl+S to save
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.93);
+      const w = window.open('');
+      if (w) {
+        w.document.title = filename;
+        w.document.body.style.cssText = 'margin:0;background:#222;display:flex;align-items:center;justify-content:center;min-height:100vh';
+        w.document.body.innerHTML = '<img src="' + dataUrl + '" style="max-width:100%;max-height:100vh">';
+        toast('Image opened — press Ctrl+S to save');
+      } else {
+        toast('Pop-up blocked — allow pop-ups and try again', '!');
+      }
+    }
+  } catch(e) {
+    if (e.name === 'AbortError') return; // user cancelled share dialog
+    toast('Export failed: ' + e.message, '!');
+  }
+
+  state.selectedDays = new Set(state.selectedExportDays);
+  renderDayGrid(); updateSelectionUI();
+}
+
+// ─── CANVAS EXPORT ────────────────────────────────────────────────────────────
+function buildExportCanvas(customer, plan, dates, indices) {
+  const PAD = 44;
+  const CARD_W = 340;
+  const GAP = 20;
+  const HEADER_H = 76;
+
+  // Pre-calculate each card's height based on wrapped dish text
+  const testCanvas = document.createElement('canvas');
+  const testCtx = testCanvas.getContext('2d');
+  const DISH_MAX_W = CARD_W - 100 - 20; // right column width
+  const CARD_HEADER_H = 52;
+  const MEAL_PAD_V = 11;
+  const LINE_H = 17;
+  const MIN_ROW_H = 56;
+
+  function calcCardH(dayPlan) {
+    let h = CARD_HEADER_H;
+    ['breakfast','lunch','dinner'].forEach(m => {
+      const dish = dayPlan[m].dish || '';
+      testCtx.font = '500 12.5px Arial';
+      const lines = measureLines(testCtx, dish, DISH_MAX_W, 3);
+      const rowH = Math.max(MIN_ROW_H, MEAL_PAD_V * 2 + 14 + lines * LINE_H);
+      h += 1 + rowH;
+    });
+    return h + 14; // bottom padding
+  }
+
+  const cardHeights = indices.map(i => calcCardH(plan[i]));
+  const maxCardH = Math.max(...cardHeights);
+
+  const n = indices.length;
+  const cols = n <= 2 ? n : 3;
+  const rows = Math.ceil(n / cols);
+
+  const totalW = PAD * 2 + cols * CARD_W + (cols - 1) * GAP;
+  const totalH = PAD * 2 + HEADER_H + GAP + rows * maxCardH + (rows - 1) * GAP;
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(totalW * dpr);
+  canvas.height = Math.round(totalH * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // ── Background
+  ctx.fillStyle = '#F2F4F1';
+  ctx.fillRect(0, 0, totalW, totalH);
+
+  // ── Header: customer name
+  ctx.fillStyle = '#2A5240';
+  ctx.font = '800 24px -apple-system, Arial, sans-serif';
+  ctx.fillText(customer.name, PAD, PAD + 28);
+
+  // ── Header: week label
+  ctx.fillStyle = '#8AA898';
+  ctx.font = '500 13px -apple-system, Arial, sans-serif';
+  ctx.fillText('Week of ' + weekLabel(state.planWeekOffset), PAD, PAD + 50);
+
+  // ── Header: branding (right-aligned)
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#B0C4B8';
+  ctx.font = '500 11px -apple-system, Arial, sans-serif';
+  ctx.fillText('Menu Planner', totalW - PAD, PAD + 50);
+  ctx.textAlign = 'left';
+
+  // ── Divider under header
+  ctx.strokeStyle = '#D8E2D8';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD, PAD + HEADER_H - 10);
+  ctx.lineTo(totalW - PAD, PAD + HEADER_H - 10);
+  ctx.stroke();
+
+  // ── Cards
+  indices.forEach((dayIdx, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = PAD + col * (CARD_W + GAP);
+    const cy = PAD + HEADER_H + GAP + row * (maxCardH + GAP);
+    drawExportCard(ctx, cx, cy, CARD_W, maxCardH, plan[dayIdx], dates[dayIdx], dayIdx,
+                   CARD_HEADER_H, DISH_MAX_W, LINE_H, MEAL_PAD_V, MIN_ROW_H);
+  });
+
+  return canvas;
+}
+
+function measureLines(ctx, text, maxW, maxLines) {
+  if (!text) return 1;
+  const allLines = [];
+  for (const para of text.split('\n')) {
+    if (!para.trim()) { allLines.push(''); continue; }
+    let line = '';
+    for (const word of para.split(' ')) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW && line) { allLines.push(line); line = word; }
+      else line = test;
+    }
+    if (line) allLines.push(line);
+  }
+  return Math.min(allLines.length || 1, maxLines);
+}
+
+function drawExportCard(ctx, x, y, w, h, dayPlan, date, dayIdx,
+                        cardHeaderH, dishMaxW, lineH, padV, minRowH) {
+  const R = 11;
+
+  // Shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(26,53,40,0.11)';
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 3;
+  ctx.fillStyle = '#FFFFFF';
+  rrect(ctx, x, y, w, h, R);
+  ctx.fill();
+  ctx.restore();
+
+  // Border
+  ctx.strokeStyle = '#DDE5DF';
+  ctx.lineWidth = 1;
+  rrect(ctx, x, y, w, h, R);
+  ctx.stroke();
+
+  // Card header background strip
+  ctx.fillStyle = '#FAFBFA';
+  rrect(ctx, x, y, w, cardHeaderH, R, true); // top-only radius
+  ctx.fill();
+
+  // Day name
+  ctx.fillStyle = '#18261E';
+  ctx.font = '800 15px -apple-system, Arial, sans-serif';
+  ctx.fillText(DAYS_OF_WEEK[dayIdx], x + 16, y + 22);
+
+  // Date
+  ctx.fillStyle = '#8AA898';
+  ctx.font = '500 11.5px -apple-system, Arial, sans-serif';
+  ctx.fillText(MONTHS[date.getMonth()] + ' ' + date.getDate(), x + 16, y + 38);
+
+  // Header separator
+  ctx.strokeStyle = '#EEF2EE';
+  ctx.lineWidth = 1;
+  hline(ctx, x, y + cardHeaderH, w);
+
+  // Meal rows
+  const meals = [
+    { key:'breakfast', label:'BREAKFAST', color:'#C8762A' },
+    { key:'lunch',     label:'LUNCH',     color:'#2A5240' },
+    { key:'dinner',    label:'DINNER',    color:'#5A3A8C' },
+  ];
+
+  let curY = y + cardHeaderH;
+  meals.forEach((m, mi) => {
+    const meal = dayPlan[m.key];
+    const dish = meal.dish || '';
+
+    // Measure how many lines this dish needs
+    ctx.font = '500 12.5px -apple-system, Arial, sans-serif';
+    const numLines = measureLines(ctx, dish, dishMaxW, 3);
+    const rowH = Math.max(minRowH, padV * 2 + 14 + numLines * lineH);
+
+    if (mi > 0) { hline(ctx, x, curY, w); }
+
+    // Meal type label
+    ctx.fillStyle = m.color;
+    ctx.font = '700 9px -apple-system, Arial, sans-serif';
+    ctx.fillText(m.label, x + 16, curY + padV + 11);
+
+    // Servings
+    ctx.fillStyle = '#8AA898';
+    ctx.font = '500 10.5px -apple-system, Arial, sans-serif';
+    ctx.fillText('\u{1F465} ' + (meal.servings || 2), x + 16, curY + padV + 27);
+
+    // Dish text
+    const dishX = x + 96;
+    if (dish) {
+      ctx.fillStyle = '#18261E';
+      ctx.font = '500 12.5px -apple-system, Arial, sans-serif';
+      wrapText(ctx, dish, dishX, curY + padV + 13, dishMaxW, lineH, 3);
+    } else {
+      ctx.fillStyle = '#B0C4B8';
+      ctx.font = 'italic 12px -apple-system, Arial, sans-serif';
+      ctx.fillText('No meal set', dishX, curY + padV + 13);
+    }
+
+    curY += rowH;
+  });
+}
+
+function wrapText(ctx, text, x, y, maxW, lineH, maxLines) {
+  const allLines = [];
+  for (const para of text.split('\n')) {
+    if (!para.trim()) { allLines.push(''); continue; }
+    let line = '';
+    for (const word of para.split(' ')) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW && line) { allLines.push(line); line = word; }
+      else line = test;
+    }
+    if (line) allLines.push(line);
+  }
+  const capped = allLines.slice(0, maxLines);
+  if (allLines.length > maxLines) capped[maxLines - 1] = capped[maxLines - 1].trimEnd() + '…';
+  capped.forEach((ln, i) => { if (ln) ctx.fillText(ln, x, y + i * lineH); });
+}
+
+function rrect(ctx, x, y, w, h, r, topOnly) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  if (topOnly) {
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+  } else {
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  }
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function hline(ctx, x, y, w) {
+  ctx.strokeStyle = '#EEF2EE';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w, y);
+  ctx.stroke();
+}
+
+// ─── TEMPLATE DOWNLOAD ────────────────────────────────────────────────────────
+const TEMPLATE_DATA = [
+  ['Monday','Breakfast','Poha with chai','2',''],
+  ['Monday','Lunch','Dal tadka + jeera rice (5 cups)','3','Soak chole overnight'],
+  ['Monday','Dinner','Chole masala + 15 rotis','3',''],
+  ['Tuesday','Breakfast','','2',''],
+  ['Tuesday','Lunch','Aunty\'s special salad','2',''],
+  ['Tuesday','Dinner','Paneer butter masala + 12 rotis','3',''],
+  ['Wednesday','Breakfast','','2',''],
+  ['Wednesday','Lunch','Peri peri paneer wraps','2','Less spicy for one portion'],
+  ['Wednesday','Dinner','Palak paneer + 10 rotis','3','Soak chana'],
+  ['Thursday','Breakfast','','2',''],
+  ['Thursday','Lunch','','2',''],
+  ['Thursday','Dinner','','3',''],
+  ['Friday','Breakfast','','2',''],
+  ['Friday','Lunch','Dal with 8 rotis + bhindi masala','2',''],
+  ['Friday','Dinner','Masala rice bowl','3',''],
+  ['Saturday','Breakfast','','2',''],
+  ['Saturday','Lunch','','2',''],
+  ['Saturday','Dinner','Capsicum paneer sabzi + mixed dal + rice','3',''],
+  ['Sunday','Breakfast','','2',''],
+  ['Sunday','Lunch','','2',''],
+  ['Sunday','Dinner','','3',''],
+];
+
+function downloadTemplate() {
+  const tbody = document.getElementById('tpl-tbody');
+  tbody.innerHTML = TEMPLATE_DATA.map(row =>
+    `<tr>${row.map((cell,i) =>
+      `<td${!cell && i>=2?' class="empty"':''}>${cell || (i===2?'(empty)':i===4?'':cell)}</td>`
+    ).join('')}</tr>`
+  ).join('');
+  document.getElementById('copy-ok').style.display = 'none';
+  openModal('modal-template');
+}
+
+function getTemplateCSV() {
+  const header = 'Day,Meal,Dish,Servings,Notes';
+  const rows = TEMPLATE_DATA.map(r => r.map(c => c.includes(',') ? `"${c}"` : c).join(','));
+  return header + '\n' + rows.join('\n') + '\n';
+}
+
+function copyTemplateCSV() {
+  navigator.clipboard.writeText(getTemplateCSV()).then(() => {
+    showCopyOk();
+    toast('CSV copied — paste into a text editor and save as .csv');
+  });
+}
+
+function copyTemplateTable() {
+  const table = document.getElementById('tpl-table');
+  const range = document.createRange();
+  range.selectNode(table);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.execCommand('copy');
+  sel.removeAllRanges();
+  showCopyOk();
+  toast('Table copied — paste directly into Excel or Google Sheets');
+}
+
+function showCopyOk() {
+  const el = document.getElementById('copy-ok');
+  el.style.display = 'flex';
+  setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+// ─── GOTO PLAN (from home) ────────────────────────────────────────────────────
+const _origGoToPlan = goToPlan;
+// Override to also apply imported data
+window.goToPlan = function() {
+  if (!state.selectedHouseId) return;
+  state.currentCustomerId = state.selectedHouseId;
+  state.planWeekOffset = state.homeWeekOffset;
+  state.selectedDays = new Set();
+
+  // Apply pending imported data if any
+  if (state.pendingImportData) {
+    applyPlanData(state.currentCustomerId, state.planWeekOffset, state.pendingImportData);
+    state.pendingImportData = null;
+  }
+
+  showScreen('screen-plan');
+  renderPlanHeader();
+  renderDayGrid();
+};
+
+// ─── MODAL HELPERS ────────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModalBackdrop(e, id) { if(e.target===document.getElementById(id)) closeModal(id); }
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg, type) {
+  const stack = document.getElementById('toast-stack');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  const icon = type==='!'? '⚠️' : '✓';
+  const color = type==='!'? '#C8762A' : '#3D7358';
+  el.innerHTML = `<span style="color:${color}">${icon}</span> ${msg}`;
+  stack.appendChild(el);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),250); }, 2600);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadState();
+document.getElementById('home-week-label').textContent = homeWeekLabel();
+renderHomeHouseDropdown();
+
+// Close house dropdown on outside click
+document.addEventListener('click', e => {
+  if (!document.getElementById('house-select-wrap').contains(e.target)) {
+    document.getElementById('house-trigger').classList.remove('open');
+    document.getElementById('house-dropdown').classList.remove('open');
+  }
+});
+</script>
