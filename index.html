@@ -530,6 +530,7 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
         ⬇ Download Selected
       </button>
       <button class="btn btn-outline" onclick="openIngredientsSheet()">🛒 Ingredients</button>
+      <button class="btn btn-outline" onclick="openInventoryModal()">📦 Inventory</button>
       <button class="btn btn-outline" onclick="selectAll()">Select All</button>
       <button class="btn btn-outline" onclick="clearSelection()">Deselect</button>
       <button class="btn btn-outline" onclick="openUploadModal()">✏️ Edit Plan</button>
@@ -727,6 +728,42 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
         <button class="btn btn-outline" onclick="copyTemplateCSV()">📋 Copy as CSV</button>
         <button class="btn btn-green" onclick="copyTemplateTable()">📋 Copy Table</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Inventory ────────────────────── -->
+<div class="modal-backdrop" id="modal-inventory" onclick="closeModalBackdrop(event,'modal-inventory')">
+  <div class="modal" style="width:600px">
+    <div class="modal-header">
+      <div class="modal-title">📦 Inventory Uploads</div>
+      <button class="modal-close" onclick="closeModal('modal-inventory')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:flex-end">
+        <div style="flex:1">
+          <div class="input-label">Date</div>
+          <input type="date" class="input" id="inv-date">
+        </div>
+        <div style="flex:1">
+          <div class="input-label">Type</div>
+          <select class="input" id="inv-type">
+            <option value="check">Inventory Check</option>
+            <option value="analysis">Inventory Analysis</option>
+          </select>
+        </div>
+      </div>
+      <div id="inv-drop-zone" style="border:2px dashed var(--border);border-radius:var(--r-sm);padding:28px;text-align:center;cursor:pointer;transition:border-color 0.15s;margin-bottom:16px">
+        <div style="font-size:28px;margin-bottom:6px">📷</div>
+        <div style="font-weight:700;font-size:14px">Upload Images</div>
+        <div style="font-size:12px;color:var(--text-3)">Drag & drop or click to browse (multiple allowed)</div>
+        <input type="file" id="inv-file-input" accept="image/*" multiple style="display:none">
+      </div>
+      <div id="inv-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+      <button class="btn btn-green" id="inv-save-btn" onclick="saveInventoryUpload()" style="width:100%;display:none">Save Upload</button>
+      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">Upload History</div>
+      <div id="inv-history" style="font-size:13px;color:var(--text-3)">No uploads yet</div>
     </div>
   </div>
 </div>
@@ -1961,6 +1998,131 @@ function downloadDayRecipes(event, dayIdx) {
 }
 
 // ─── INGREDIENTS SHEET ────────────────────────────────────────────────────────
+// ─── INVENTORY ───────────────────────────────────────────────────────────────
+let pendingInvFiles = [];
+
+function openInventoryModal() {
+  pendingInvFiles = [];
+  document.getElementById('inv-preview').innerHTML = '';
+  document.getElementById('inv-save-btn').style.display = 'none';
+  const today = new Date();
+  document.getElementById('inv-date').value = today.toISOString().split('T')[0];
+  document.getElementById('inv-type').value = 'check';
+  renderInventoryHistory();
+  openModal('modal-inventory');
+}
+
+(function initInvDrop() {
+  document.addEventListener('DOMContentLoaded', () => {
+    const zone = document.getElementById('inv-drop-zone');
+    const fileInput = document.getElementById('inv-file-input');
+    if (!zone || !fileInput) return;
+    zone.addEventListener('click', () => fileInput.click());
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--green)'; });
+    zone.addEventListener('dragleave', () => { zone.style.borderColor = 'var(--border)'; });
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.style.borderColor = 'var(--border)';
+      handleInvFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => { handleInvFiles(fileInput.files); fileInput.value = ''; });
+  });
+})();
+
+function handleInvFiles(files) {
+  Array.from(files).forEach(f => {
+    if (!f.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingInvFiles.push({ name: f.name, data: e.target.result });
+      renderInvPreviews();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function renderInvPreviews() {
+  const el = document.getElementById('inv-preview');
+  el.innerHTML = pendingInvFiles.map((f, i) => `
+    <div style="position:relative;width:80px;height:80px;border-radius:6px;overflow:hidden;border:1px solid var(--border)">
+      <img src="${f.data}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removeInvFile(${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>`).join('');
+  document.getElementById('inv-save-btn').style.display = pendingInvFiles.length ? 'block' : 'none';
+}
+
+function removeInvFile(idx) {
+  pendingInvFiles.splice(idx, 1);
+  renderInvPreviews();
+}
+
+function saveInventoryUpload() {
+  if (!pendingInvFiles.length) { toast('Add at least one image', '!'); return; }
+  const date = document.getElementById('inv-date').value;
+  const type = document.getElementById('inv-type').value;
+  if (!date) { toast('Select a date', '!'); return; }
+  const key = 'inventory_' + state.currentCustomerId;
+  let uploads = [];
+  try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  uploads.unshift({
+    id: 'inv' + Date.now(),
+    date,
+    type,
+    images: pendingInvFiles.map(f => f.data),
+    imageNames: pendingInvFiles.map(f => f.name),
+    createdAt: new Date().toISOString()
+  });
+  try {
+    localStorage.setItem(key, JSON.stringify(uploads));
+  } catch(e) {
+    toast('Storage full — try fewer or smaller images', '!');
+    return;
+  }
+  pendingInvFiles = [];
+  document.getElementById('inv-preview').innerHTML = '';
+  document.getElementById('inv-save-btn').style.display = 'none';
+  renderInventoryHistory();
+  toast('Inventory upload saved ✓');
+}
+
+function renderInventoryHistory() {
+  const key = 'inventory_' + state.currentCustomerId;
+  let uploads = [];
+  try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  const el = document.getElementById('inv-history');
+  if (!uploads.length) { el.innerHTML = '<div style="color:var(--text-3)">No uploads yet</div>'; return; }
+  el.innerHTML = uploads.map(u => {
+    const typeLabel = u.type === 'analysis' ? '📊 Analysis' : '📋 Check';
+    const d = new Date(u.date + 'T00:00:00');
+    const dateStr = d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+    return `
+    <div style="border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div>
+          <span style="font-weight:700;color:var(--text)">${dateStr}</span>
+          <span style="margin-left:8px;font-size:12px;padding:2px 8px;border-radius:10px;background:${u.type==='analysis'?'var(--amber-lt)':'var(--green-lt)'};color:${u.type==='analysis'?'var(--amber)':'var(--green)'};font-weight:600">${typeLabel}</span>
+        </div>
+        <button onclick="deleteInventoryUpload('${u.id}')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:12px;font-weight:600">Delete</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${u.images.map((img, i) => `
+          <a href="${img}" target="_blank" style="display:block;width:64px;height:64px;border-radius:4px;overflow:hidden;border:1px solid var(--border)">
+            <img src="${img}" style="width:100%;height:100%;object-fit:cover" title="${u.imageNames?.[i]||'image'}">
+          </a>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteInventoryUpload(id) {
+  const key = 'inventory_' + state.currentCustomerId;
+  let uploads = [];
+  try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  uploads = uploads.filter(u => u.id !== id);
+  localStorage.setItem(key, JSON.stringify(uploads));
+  renderInventoryHistory();
+  toast('Upload deleted');
+}
+
 function openIngredientsSheet() {
   const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
   const dates = weekDates(state.planWeekOffset);
