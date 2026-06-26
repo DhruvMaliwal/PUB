@@ -699,35 +699,6 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
   </div>
 </div>
 
-<!-- ── MODAL: Google Sheets Setup ────────── -->
-<div class="modal-backdrop" id="modal-gs-setup" onclick="closeModalBackdrop(event,'modal-gs-setup')">
-  <div class="modal" style="width:560px">
-    <div class="modal-header">
-      <div class="modal-title">Connect Google Sheets</div>
-      <button class="modal-close" onclick="closeModal('modal-gs-setup')">✕</button>
-    </div>
-    <div class="modal-body" style="padding:20px 24px">
-      <p style="color:var(--text-2);font-size:14px;margin-bottom:16px">One-time setup — after this, clicking Ingredients creates and opens a Google Sheet instantly.</p>
-      <ol style="padding-left:18px;color:var(--text);font-size:14px;line-height:2.1">
-        <li>Go to <strong>console.cloud.google.com</strong> → create a project</li>
-        <li>APIs &amp; Services → Enable <strong>Google Sheets API</strong></li>
-        <li>Credentials → Create <strong>OAuth 2.0 Client ID</strong> → Web application</li>
-        <li>Add the URL below as both <em>Authorized JavaScript origin</em> and <em>Authorized redirect URI</em>:<br>
-          <code id="gs-redirect-uri" style="background:var(--green-lt);padding:4px 10px;border-radius:5px;font-size:12px;word-break:break-all;display:inline-block;margin-top:4px"></code>
-        </li>
-        <li>Copy the <strong>Client ID</strong> and paste it here:</li>
-      </ol>
-      <input type="text" id="gs-client-id-input" placeholder="Paste OAuth 2.0 Client ID (ends with .apps.googleusercontent.com)…"
-        style="width:100%;margin-top:12px;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13.5px;background:var(--surface);color:var(--text);outline:none">
-      <div style="font-size:12px;color:var(--text-3);margin-top:8px">The Client ID is public and safe to store. Your data goes directly to Google — never to any third party.</div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modal-gs-setup')">Cancel</button>
-      <button class="btn btn-green" onclick="saveGsClientIdAndAuth()">Connect &amp; Create Sheet →</button>
-    </div>
-  </div>
-</div>
-
 <!-- ── MODAL: Template ────────────────────── -->
 <div class="modal-backdrop" id="modal-template" onclick="closeModalBackdrop(event,'modal-template')">
   <div class="modal" style="width:600px">
@@ -1969,191 +1940,22 @@ function downloadDayRecipes(event, dayIdx) {
   openModal('modal-recipes');
 }
 
-// ─── GOOGLE SHEETS OAUTH + INGREDIENTS ───────────────────────────────────────
-let _gsToken = null;
-let _gsPending = false;
-
-function getGsClientId() { return localStorage.getItem('gsClientId') || ''; }
-function saveGsClientId(v) { localStorage.setItem('gsClientId', v.trim()); }
-function gsRedirectUri() { return window.location.href.split('#')[0].split('?')[0]; }
-
-function openGsSetupModal() {
-  document.getElementById('gs-redirect-uri').textContent = gsRedirectUri();
-  const saved = getGsClientId();
-  if (saved) document.getElementById('gs-client-id-input').value = saved;
-  openModal('modal-gs-setup');
-}
-
-function saveGsClientIdAndAuth() {
-  const v = document.getElementById('gs-client-id-input').value.trim();
-  if (!v) { toast('Paste a Client ID first', '!'); return; }
-  saveGsClientId(v);
-  closeModal('modal-gs-setup');
-  _triggerGsAuth();
-}
-
-function _triggerGsAuth() {
-  const cid = getGsClientId();
-  if (!cid) { openGsSetupModal(); return; }
-  const p = new URLSearchParams({
-    client_id: cid, redirect_uri: gsRedirectUri(),
-    response_type: 'token', scope: 'https://www.googleapis.com/auth/spreadsheets',
-    prompt: 'select_account'
-  });
-  const w=500, h=640, l=(screen.width-w)/2, t=(screen.height-h)/2;
-  window.open('https://accounts.google.com/o/oauth2/v2/auth?'+p, 'gsauth',
-    `width=${w},height=${h},left=${l},top=${t}`);
-}
-
-window.addEventListener('message', e => {
-  if (e.data?.type === 'gs_oauth_token') {
-    _gsToken = e.data.token;
-    if (_gsPending) { _gsPending = false; openIngredientsSheet(); }
-  }
-});
-
-async function openIngredientsSheet() {
-  if (!_gsToken) {
-    _gsPending = true;
-    if (!getGsClientId()) { openGsSetupModal(); return; }
-    _triggerGsAuth();
-    return;
-  }
+// ─── INGREDIENTS SHEET ────────────────────────────────────────────────────────
+function openIngredientsSheet() {
   const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
   const dates = weekDates(state.planWeekOffset);
   const c = state.customers.find(x => x.id === state.currentCustomerId);
-  toast('Creating Google Sheet…');
   try {
-    await _createGoogleIngredientsSheet(_gsToken, plan, dates, c);
-  } catch(e) {
-    if (e.message?.includes('401') || e.message?.includes('UNAUTHENTICATED')) {
-      _gsToken = null; _gsPending = true; _triggerGsAuth();
-    } else { toast('Failed: ' + e.message, '!'); }
-  }
-}
-
-async function _createGoogleIngredientsSheet(token, plan, dates, customer) {
-  const darkBlue = {red:0.122, green:0.220, blue:0.392};
-  const medBlue  = {red:0.180, green:0.459, blue:0.714};
-  const white    = {red:1, green:1, blue:1};
-  const thin = () => ({style:'SOLID', width:1, color:{red:0,green:0,blue:0}});
-  const borders = () => ({top:thin(), bottom:thin(), left:thin(), right:thin()});
-
-  const hdrCell = (text, bg) => ({
-    userEnteredValue: {stringValue: text},
-    userEnteredFormat: {
-      backgroundColor: bg, borders: borders(),
-      textFormat: {bold:true, foregroundColor:white, fontSize:11},
-      horizontalAlignment:'CENTER', verticalAlignment:'MIDDLE'
-    }
-  });
-  const dataCell = text => ({
-    userEnteredValue: {stringValue: text || ''},
-    userEnteredFormat: {borders: borders()}
-  });
-
-  const MEALS = ['breakfast','lunch','dinner'];
-  const MTITLES = ['Breakfast','Lunch','Dinner'];
-  const SUB = ['Ingredients','Availability','Status'];
-
-  const sheetsPayload = plan.map((day, si) => {
-    const dt = dates[si];
-    const dayLabel = DAYS_OF_WEEK[si]+' '+MONTHS[dt.getMonth()]+' '+dt.getDate();
-    const dishLine = MTITLES.map((m,mi)=>{
-      const d=day[MEALS[mi]].dish; return d ? m+': '+d : null;
-    }).filter(Boolean).join(' | ');
-    const contextStr = dayLabel + (dishLine ? ' — '+dishLine : '');
-
-    const mealIngs = MEALS.map(m => {
-      const all = [];
-      for (const d of splitDishes(day[m].dish))
-        getIngredientsForDish(d).forEach(ing => { if (!all.includes(ing)) all.push(ing); });
-      return all;
-    });
-    const DR = Math.max(...mealIngs.map(a=>a.length), 0, 15) + 5;
-
-    const rowData = [
-      {values:[{userEnteredValue:{stringValue:contextStr}, userEnteredFormat:{wrapStrategy:'WRAP'}}]},
-      {values:[
-        hdrCell('Breakfast',darkBlue), hdrCell('',darkBlue), hdrCell('',darkBlue),
-        hdrCell('Lunch',darkBlue),     hdrCell('',darkBlue), hdrCell('',darkBlue),
-        hdrCell('Dinner',darkBlue),    hdrCell('',darkBlue), hdrCell('',darkBlue),
-      ]},
-      {values:[
-        ...SUB.map(l=>hdrCell(l,medBlue)),
-        ...SUB.map(l=>hdrCell(l,medBlue)),
-        ...SUB.map(l=>hdrCell(l,medBlue)),
-      ]},
-      ...Array.from({length:DR}, (_,ri) => ({values:[
-        dataCell(mealIngs[0][ri]), dataCell(''), dataCell(''),
-        dataCell(mealIngs[1][ri]), dataCell(''), dataCell(''),
-        dataCell(mealIngs[2][ri]), dataCell(''), dataCell(''),
-      ]}))
-    ];
-
-    return {
-      properties: {sheetId:si, title:DAYS_OF_WEEK[si]},
-      data: [{rowData}],
-      merges: [
-        {sheetId:si, startRowIndex:1, endRowIndex:2, startColumnIndex:0, endColumnIndex:3},
-        {sheetId:si, startRowIndex:1, endRowIndex:2, startColumnIndex:3, endColumnIndex:6},
-        {sheetId:si, startRowIndex:1, endRowIndex:2, startColumnIndex:6, endColumnIndex:9},
-      ]
-    };
-  });
-
-  const title = (customer?.name||'Menu') + ' — Ingredients ' + weekLabel(state.planWeekOffset);
-  const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
-    method:'POST',
-    headers:{'Authorization':'Bearer '+token, 'Content-Type':'application/json'},
-    body: JSON.stringify({properties:{title}, sheets:sheetsPayload})
-  });
-  if (!createRes.ok) {
-    const err = await createRes.json().catch(()=>({}));
-    throw new Error(err.error?.message || 'HTTP '+createRes.status);
-  }
-  const created = await createRes.json();
-  const ssId = created.spreadsheetId;
-
-  const AVAIL  = ['Available in inventory','Not available in inventory','Dont know'];
-  const STATUS = ['Blinkit','Swiggy Instamart','Zepto','FirstClub','Fresh2Home','Licious','Big Basket','Handpickd','Needs to be added to cart'];
-
-  const dropReq = (sheetId, colStart, vals, lastRow) =>
-    [colStart, colStart+3, colStart+6].map(sc => ({
-      setDataValidation: {
-        range: {sheetId, startRowIndex:3, endRowIndex:lastRow, startColumnIndex:sc, endColumnIndex:sc+1},
-        rule: {condition:{type:'ONE_OF_LIST', values:vals.map(v=>({userEnteredValue:v}))}, strict:true, showCustomUi:true}
-      }
-    }));
-
-  const batchReqs = plan.flatMap((day, si) => {
-    const mIng = MEALS.map(m => {
-      const all=[];
-      for(const d of splitDishes(day[m].dish)) getIngredientsForDish(d).forEach(ing=>{if(!all.includes(ing))all.push(ing);});
-      return all;
-    });
-    const lastRow = Math.max(...mIng.map(a=>a.length), 15) + 8;
-    const colWidths = [220,180,180, 220,180,180, 220,180,180];
-    return [
-      ...dropReq(si, 1, AVAIL, lastRow),
-      ...dropReq(si, 2, STATUS, lastRow),
-      ...colWidths.map((px, ci) => ({
-        updateDimensionProperties: {
-          range:{sheetId:si, dimension:'COLUMNS', startIndex:ci, endIndex:ci+1},
-          properties:{pixelSize:px}, fields:'pixelSize'
-        }
-      }))
-    ];
-  });
-
-  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${ssId}:batchUpdate`, {
-    method:'POST',
-    headers:{'Authorization':'Bearer '+token, 'Content-Type':'application/json'},
-    body: JSON.stringify({requests:batchReqs})
-  });
-
-  window.open(created.spreadsheetUrl, '_blank');
-  toast('Google Sheet created ✓');
+    const bytes = buildIngredientsXLSX(plan, dates, c);
+    const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (c ? c.name.toLowerCase().replace(/\s+/g,'_') : 'menu') + '_ingredients.xlsx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Ingredients sheet downloaded ✓');
+  } catch(e) { toast('Failed: ' + e.message, '!'); }
 }
 
 const INGREDIENT_DB = {
@@ -2217,8 +2019,7 @@ function getIngredientsForDish(dishStr) {
   return [dishStr.trim() + ' (ingredients TBD)'];
 }
 
-// (legacy XLSX builder kept as dead code — not called)
-function _unused_buildIngredientsXLSX() {
+function buildIngredientsXLSX(plan, dates, customer) {
   const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <fonts count="3">
@@ -2398,17 +2199,6 @@ function _unused_buildIngredientsXLSX() {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-// Handle OAuth return inside popup — send token back to opener and close
-(function() {
-  if (!window.location.hash) return;
-  const p = new URLSearchParams(window.location.hash.substring(1));
-  const token = p.get('access_token');
-  if (token && window.opener) {
-    window.opener.postMessage({type:'gs_oauth_token', token}, '*');
-    window.close();
-  }
-})();
-
 loadState();
 document.getElementById('home-week-label').textContent = homeWeekLabel();
 renderHomeHouseDropdown();
