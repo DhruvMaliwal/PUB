@@ -1749,8 +1749,8 @@ function buildYoutubeSearchUrl(dish) {
 }
 
 function buildRasoiUrl(dish) {
-  const slug = dish.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return 'https://recipe-voice-finder.emergent.host/recipe/' + slug;
+  const clean = dish.trim().replace(/\s*\(.*?\)\s*/g, '').replace(/\d+\s*/g, '').trim();
+  return 'https://recipe-voice-finder.emergent.host/?q=' + encodeURIComponent(clean);
 }
 
 function splitDishes(dishStr) {
