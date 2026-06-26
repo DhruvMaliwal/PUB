@@ -526,6 +526,7 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
               style="display:none" onclick="openExportModal()">
         ⬇ Download Selected
       </button>
+      <button class="btn btn-outline" onclick="openIngredientsSheet()">🛒 Ingredients</button>
       <button class="btn btn-outline" onclick="selectAll()">Select All</button>
       <button class="btn btn-outline" onclick="clearSelection()">Deselect</button>
       <button class="btn btn-outline" onclick="openUploadModal()">✏️ Edit Plan</button>
@@ -1937,6 +1938,189 @@ function downloadDayRecipes(event, dayIdx) {
       </td>
     </tr>`).join('');
   openModal('modal-recipes');
+}
+
+// ─── INGREDIENTS SHEET ────────────────────────────────────────────────────────
+function openIngredientsSheet() {
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  const dates = weekDates(state.planWeekOffset);
+  const c = state.customers.find(x => x.id === state.currentCustomerId);
+  try {
+    const bytes = buildIngredientsXLSX(plan, dates, c);
+    const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (c ? c.name.toLowerCase().replace(/\s+/g,'_') : 'menu') + '_ingredients.xlsx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Ingredients sheet downloaded ✓');
+  } catch(e) { toast('Failed: ' + e.message, '!'); }
+}
+
+function buildIngredientsXLSX(plan, dates, customer) {
+  const AVAIL_LIST = 'Available in inventory,Not available in inventory,Dont know';
+  const STATUS_LIST = 'Blinkit,Swiggy Instamart,Zepto,FirstClub,Fresh2Home,Licious,Big Basket,Handpickd,Needs to be added to cart';
+  const DATA_ROWS = 20;
+  const enc = s => strToBytes(s);
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="3">
+    <font><sz val="10"/><name val="Calibri"/></font>
+    <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+    <font><b/><sz val="10"/><name val="Calibri"/></font>
+  </fonts>
+  <fills count="4">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF1F3864"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF2E75B6"/></patternFill></fill>
+  </fills>
+  <borders count="2">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border>
+      <left style="thin"><color rgb="FF000000"/></left>
+      <right style="thin"><color rgb="FF000000"/></right>
+      <top style="thin"><color rgb="FF000000"/></top>
+      <bottom style="thin"><color rgb="FF000000"/></bottom>
+    </border>
+  </borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="5">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1"/></xf>
+  </cellXfs>
+</styleSheet>`;
+
+  // Build one sheet per day
+  const sheetXmls = plan.map((day, i) => {
+    const dt = dates[i];
+    const dayLabel = DAYS_OF_WEEK[i] + ' ' + MONTHS[dt.getMonth()] + ' ' + dt.getDate();
+    const meals = ['breakfast','lunch','dinner'];
+    const mealTitles = ['Breakfast','Lunch','Dinner'];
+
+    // Row 1: context (day + dish names)
+    const dishes = mealTitles.map((m,mi) => {
+      const d = day[meals[mi]].dish;
+      return d ? m + ': ' + d : null;
+    }).filter(Boolean).join(' | ');
+    const contextStr = dayLabel + (dishes ? ' — ' + dishes : '');
+
+    // Cols: A-C = Breakfast, D-F = Lunch, G-I = Dinner
+    // Row 2: section headers (merged A2:C2, D2:F2, G2:I2)
+    // Row 3: sub-headers
+    // Rows 4..(3+DATA_ROWS): data rows
+
+    const lastDataRow = 3 + DATA_ROWS;
+
+    // Section header row (style 1 = dark blue)
+    const secRow = mealTitles.map((t, mi) => {
+      const cols = [['A','B','C'],['D','E','F'],['G','H','I']][mi];
+      return cols.map((col, ci) =>
+        `<c r="${col}2" t="inlineStr" s="1"><is><t>${ci===0?t:''}</t></is></c>`
+      ).join('');
+    }).join('');
+
+    // Sub-header row (style 2 = medium blue)
+    const subLabels = ['Ingredients','Availability','Status'];
+    const subRow = ['A','D','G'].map((startCol, mi) => {
+      const cols = [['A','B','C'],['D','E','F'],['G','H','I']][mi];
+      return cols.map((col, ci) =>
+        `<c r="${col}3" t="inlineStr" s="2"><is><t>${subLabels[ci]}</t></is></c>`
+      ).join('');
+    }).join('');
+
+    // Empty data rows (style 3 = thin border)
+    const dataRows = Array.from({length: DATA_ROWS}, (_, ri) => {
+      const r = 4 + ri;
+      return `<row r="${r}">${['A','B','C','D','E','F','G','H','I'].map(col =>
+        `<c r="${col}${r}" s="3"/>`).join('')}</row>`;
+    }).join('');
+
+    // Data validations
+    const availSqref = `B4:B${lastDataRow} E4:E${lastDataRow} H4:H${lastDataRow}`;
+    const statusSqref = `C4:C${lastDataRow} F4:F${lastDataRow} I4:I${lastDataRow}`;
+
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetFormatPr defaultRowHeight="15"/>
+  <cols>
+    <col min="1" max="1" width="28" customWidth="1"/>
+    <col min="2" max="2" width="22" customWidth="1"/>
+    <col min="3" max="3" width="22" customWidth="1"/>
+    <col min="4" max="4" width="28" customWidth="1"/>
+    <col min="5" max="5" width="22" customWidth="1"/>
+    <col min="6" max="6" width="22" customWidth="1"/>
+    <col min="7" max="7" width="28" customWidth="1"/>
+    <col min="8" max="8" width="22" customWidth="1"/>
+    <col min="9" max="9" width="22" customWidth="1"/>
+  </cols>
+  <sheetData>
+    <row r="1"><c r="A1" t="inlineStr" s="4"><is><t>${contextStr.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</t></is></c></row>
+    <row r="2">${secRow}</row>
+    <row r="3">${subRow}</row>
+    ${dataRows}
+  </sheetData>
+  <mergeCells count="3">
+    <mergeCell ref="A2:C2"/>
+    <mergeCell ref="D2:F2"/>
+    <mergeCell ref="G2:I2"/>
+  </mergeCells>
+  <dataValidations count="2">
+    <dataValidation type="list" showDropDown="0" sqref="${availSqref}">
+      <formula1>"${AVAIL_LIST}"</formula1>
+    </dataValidation>
+    <dataValidation type="list" showDropDown="0" sqref="${statusSqref}">
+      <formula1>"${STATUS_LIST}"</formula1>
+    </dataValidation>
+  </dataValidations>
+</worksheet>`;
+  });
+
+  // Build workbook XML referencing all 7 sheets
+  const sheetEntries = DAYS_OF_WEEK.map((d, i) =>
+    `<sheet name="${d}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
+  const wbXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>${sheetEntries}</sheets>
+</workbook>`;
+
+  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  ${DAYS_OF_WEEK.map((d,i) => `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}
+  <Relationship Id="rId8" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const ctTypes = DAYS_OF_WEEK.map((d,i) =>
+    `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+  ${ctTypes}
+</Types>`;
+
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+  const files = [
+    {name: '[Content_Types].xml', data: enc(ct)},
+    {name: '_rels/.rels', data: enc(rootRels)},
+    {name: 'xl/workbook.xml', data: enc(wbXml)},
+    {name: 'xl/_rels/workbook.xml.rels', data: enc(wbRels)},
+    {name: 'xl/styles.xml', data: enc(stylesXml)},
+    ...sheetXmls.map((xml, i) => ({name: `xl/worksheets/sheet${i+1}.xml`, data: enc(xml)})),
+  ];
+  return buildZipUncompressed(files);
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
