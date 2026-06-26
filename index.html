@@ -1958,10 +1958,70 @@ function openIngredientsSheet() {
   } catch(e) { toast('Failed: ' + e.message, '!'); }
 }
 
+const INGREDIENT_DB = {
+  'poha': ['Flattened rice (poha)','Onion','Green chillies','Curry leaves','Mustard seeds','Turmeric powder','Peanuts','Lemon','Salt','Oil','Coriander leaves'],
+  'chai': ['Tea leaves','Milk','Sugar','Ginger','Cardamom','Water'],
+  'dal tadka': ['Toor dal','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Mustard seeds','Ghee','Turmeric powder','Red chilli powder','Salt','Coriander leaves','Hing (asafoetida)'],
+  'jeera rice': ['Basmati rice','Cumin seeds (jeera)','Ghee','Bay leaf','Salt','Water'],
+  'chole masala': ['Kabuli chana (chickpeas)','Onion','Tomato','Ginger','Garlic','Green chillies','Chole masala powder','Cumin seeds','Bay leaf','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Amchur (dry mango powder)','Oil','Salt','Coriander leaves'],
+  'rotis': ['Whole wheat flour (atta)','Water','Salt','Ghee'],
+  'roti': ['Whole wheat flour (atta)','Water','Salt','Ghee'],
+  'paneer butter masala': ['Paneer','Butter','Cream','Tomato','Onion','Cashews','Ginger','Garlic','Kashmiri red chilli powder','Garam masala','Turmeric powder','Sugar','Salt','Kasuri methi','Oil'],
+  'salad': ['Cucumber','Tomato','Onion','Carrot','Lemon','Salt','Black pepper','Chaat masala'],
+  'peri peri paneer wraps': ['Paneer','Tortilla/roti wraps','Capsicum','Onion','Peri peri spice mix','Yogurt','Garlic','Lemon juice','Oil','Salt','Lettuce','Mayonnaise'],
+  'palak paneer': ['Paneer','Spinach (palak)','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Garam masala','Cream','Salt','Oil'],
+  'dal': ['Toor dal','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Mustard seeds','Ghee','Turmeric powder','Red chilli powder','Salt','Coriander leaves'],
+  'bhindi masala': ['Bhindi (okra)','Onion','Tomato','Green chillies','Turmeric powder','Red chilli powder','Coriander powder','Amchur powder','Cumin seeds','Oil','Salt','Coriander leaves'],
+  'masala rice bowl': ['Basmati rice','Mixed vegetables','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Ghee','Salt','Coriander leaves','Lemon'],
+  'masala rice': ['Basmati rice','Mixed vegetables','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Ghee','Salt','Coriander leaves'],
+  'capsicum paneer sabzi': ['Paneer','Capsicum','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
+  'mixed dal': ['Toor dal','Moong dal','Masoor dal','Chana dal','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Mustard seeds','Ghee','Turmeric powder','Red chilli powder','Salt','Coriander leaves'],
+  'rice': ['Basmati rice','Water','Salt','Ghee'],
+  'boondi raita': ['Boondi','Yogurt (curd)','Cumin powder','Red chilli powder','Salt','Coriander leaves'],
+  'raita': ['Yogurt (curd)','Cucumber','Cumin powder','Salt','Coriander leaves'],
+  'paratha': ['Whole wheat flour (atta)','Ghee','Salt','Water'],
+  'aloo paratha': ['Whole wheat flour (atta)','Potato','Green chillies','Coriander leaves','Cumin powder','Salt','Ghee','Water'],
+  'egg curry': ['Eggs','Onion','Tomato','Ginger','Garlic','Green chillies','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
+  'rajma': ['Rajma (kidney beans)','Onion','Tomato','Ginger','Garlic','Cumin seeds','Bay leaf','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
+  'aloo gobi': ['Potato','Cauliflower','Onion','Tomato','Ginger','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
+  'paneer tikka': ['Paneer','Yogurt','Capsicum','Onion','Ginger-garlic paste','Kashmiri red chilli powder','Garam masala','Lemon juice','Oil','Salt','Chaat masala'],
+  'biryani': ['Basmati rice','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Milk','Ghee','Oil','Salt','Biryani masala'],
+  'chicken biryani': ['Chicken','Basmati rice','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Milk','Ghee','Oil','Salt','Biryani masala'],
+  'dosa': ['Dosa batter (rice + urad dal)','Oil','Ghee'],
+  'idli': ['Idli batter (rice + urad dal)','Salt'],
+  'upma': ['Rava (semolina)','Onion','Green chillies','Curry leaves','Mustard seeds','Urad dal','Chana dal','Ginger','Oil','Salt','Water','Coriander leaves','Cashews'],
+  'khichdi': ['Rice','Moong dal','Turmeric powder','Ghee','Cumin seeds','Salt','Water'],
+  'sambar': ['Toor dal','Mixed vegetables','Tamarind','Sambar powder','Turmeric powder','Mustard seeds','Curry leaves','Hing','Oil','Salt','Onion','Tomato'],
+  'uttapam': ['Dosa batter','Onion','Tomato','Capsicum','Green chillies','Coriander leaves','Oil'],
+  'pav bhaji': ['Pav buns','Potato','Cauliflower','Capsicum','Onion','Tomato','Green peas','Pav bhaji masala','Butter','Ginger','Garlic','Red chilli powder','Salt','Lemon','Coriander leaves'],
+  'naan': ['Maida (all-purpose flour)','Yogurt','Sugar','Baking soda','Salt','Ghee','Water'],
+  'paneer bhurji': ['Paneer','Onion','Tomato','Capsicum','Green chillies','Ginger','Turmeric powder','Red chilli powder','Cumin seeds','Oil','Salt','Coriander leaves'],
+  'aloo matar': ['Potato','Green peas','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
+  'chana masala': ['Kabuli chana','Onion','Tomato','Ginger','Garlic','Green chillies','Chana masala powder','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Amchur','Oil','Salt','Coriander leaves'],
+  'pulao': ['Basmati rice','Mixed vegetables','Onion','Ghee','Bay leaf','Cinnamon','Cardamom','Cloves','Cumin seeds','Salt','Water'],
+  'kadhi': ['Besan (gram flour)','Yogurt (curd)','Onion','Green chillies','Curry leaves','Mustard seeds','Cumin seeds','Turmeric powder','Red chilli powder','Hing','Ghee','Salt'],
+  'matar paneer': ['Paneer','Green peas','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Cream','Oil','Salt','Coriander leaves','Kasuri methi'],
+  'dal makhani': ['Urad dal (whole black)','Rajma','Butter','Cream','Onion','Tomato','Ginger','Garlic','Red chilli powder','Garam masala','Kasuri methi','Salt'],
+  'mix veg': ['Potato','Cauliflower','Carrot','Green peas','Beans','Capsicum','Onion','Tomato','Ginger','Garlic','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
+  'chhole': ['Kabuli chana (chickpeas)','Onion','Tomato','Ginger','Garlic','Green chillies','Chole masala powder','Cumin seeds','Bay leaf','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Amchur','Oil','Salt','Coriander leaves'],
+};
+
+function getIngredientsForDish(dishStr) {
+  if (!dishStr) return [];
+  const norm = dishStr.trim().toLowerCase()
+    .replace(/\s*\(.*?\)\s*/g, '')   // strip parentheticals like "(5 cups)" or "(soak overnight)"
+    .replace(/\d+\s*/g, '')          // strip numbers like "15 rotis" → "rotis"
+    .trim();
+  if (INGREDIENT_DB[norm]) return [...INGREDIENT_DB[norm]];
+  for (const key of Object.keys(INGREDIENT_DB)) {
+    if (norm.includes(key) || key.includes(norm)) return [...INGREDIENT_DB[key]];
+  }
+  return [dishStr.trim() + ' (ingredients TBD)'];
+}
+
 function buildIngredientsXLSX(plan, dates, customer) {
   const AVAIL_LIST = 'Available in inventory,Not available in inventory,Dont know';
   const STATUS_LIST = 'Blinkit,Swiggy Instamart,Zepto,FirstClub,Fresh2Home,Licious,Big Basket,Handpickd,Needs to be added to cart';
-  const DATA_ROWS = 20;
   const enc = s => strToBytes(s);
 
   const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -2015,7 +2075,22 @@ function buildIngredientsXLSX(plan, dates, customer) {
     // Row 3: sub-headers
     // Rows 4..(3+DATA_ROWS): data rows
 
+    // Gather ingredients per meal by splitting dishes on '+'
+    const mealIngredients = meals.map(m => {
+      const dishes = splitDishes(day[m].dish);
+      const all = [];
+      for (const d of dishes) {
+        const ings = getIngredientsForDish(d);
+        ings.forEach(ing => { if (!all.includes(ing)) all.push(ing); });
+      }
+      return all;
+    });
+
+    const maxIngredients = Math.max(...mealIngredients.map(a => a.length), 0);
+    const DATA_ROWS = Math.max(maxIngredients + 5, 20);
     const lastDataRow = 3 + DATA_ROWS;
+
+    const xmlEsc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
     // Section header row (style 1 = dark blue)
     const secRow = mealTitles.map((t, mi) => {
@@ -2034,11 +2109,15 @@ function buildIngredientsXLSX(plan, dates, customer) {
       ).join('');
     }).join('');
 
-    // Empty data rows (style 3 = thin border)
+    // Data rows — populated with ingredients
+    const colGroups = [['A','B','C'],['D','E','F'],['G','H','I']];
     const dataRows = Array.from({length: DATA_ROWS}, (_, ri) => {
       const r = 4 + ri;
-      return `<row r="${r}">${['A','B','C','D','E','F','G','H','I'].map(col =>
-        `<c r="${col}${r}" s="3"/>`).join('')}</row>`;
+      const cells = colGroups.map((cols, mi) => {
+        const ing = mealIngredients[mi][ri] || '';
+        return `<c r="${cols[0]}${r}" t="inlineStr" s="3"><is><t>${xmlEsc(ing)}</t></is></c><c r="${cols[1]}${r}" s="3"/><c r="${cols[2]}${r}" s="3"/>`;
+      }).join('');
+      return `<row r="${r}">${cells}</row>`;
     }).join('');
 
     // Data validations
