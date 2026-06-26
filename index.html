@@ -2230,22 +2230,39 @@ function getIngredientsForDish(dishStr) {
 }
 
 function getInventoryCommentMap() {
-  // Returns a map of lowercase ingredient name → comment from the most recent inventory upload
   const key = 'inventory_' + state.currentCustomerId;
   let uploads = [];
   try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  // Sort by date desc and pick the most recent with notes
-  const sorted = uploads.filter(u => u.notes && u.notes.trim()).sort((a, b) => b.date.localeCompare(a.date));
-  if (!sorted.length) return {};
-  const map = {};
-  sorted[0].notes.split('\n').forEach(line => {
-    const idx = line.indexOf(':');
-    if (idx < 1) return;
-    const name = line.slice(0, idx).trim().toLowerCase();
-    const comment = line.slice(idx + 1).trim();
-    if (name && comment) map[name] = comment;
-  });
-  return map;
+  const withNotes = uploads.filter(u => u.notes && u.notes.trim()).sort((a, b) => b.date.localeCompare(a.date));
+  if (!withNotes.length) return {};
+  // Merge all uploads (most recent first, so first entry wins)
+  const entries = [];
+  for (const u of withNotes) {
+    const d = new Date(u.date + 'T00:00:00');
+    const dateTag = d.getDate() + ' ' + MONTHS[d.getMonth()];
+    const typeTag = u.type === 'analysis' ? 'Analysis' : 'Check';
+    u.notes.split('\n').forEach(line => {
+      const idx = line.indexOf(':');
+      if (idx < 1) return;
+      const name = line.slice(0, idx).trim().toLowerCase();
+      const comment = line.slice(idx + 1).trim();
+      if (name && comment) entries.push({ name, comment: comment + ' (' + typeTag + ' ' + dateTag + ')' });
+    });
+  }
+  return { _entries: entries };
+}
+
+function lookupInventoryComment(invData, ingredientName) {
+  if (!invData._entries || !ingredientName) return '';
+  const norm = ingredientName.toLowerCase().replace(/\s*\(.*?\)\s*/g, ' ').trim();
+  const words = norm.split(/\s+/);
+  for (const e of invData._entries) {
+    if (e.name === norm) return e.comment;
+    if (norm.includes(e.name) || e.name.includes(norm)) return e.comment;
+    const eWords = e.name.split(/\s+/);
+    if (eWords.some(w => w.length > 2 && words.includes(w))) return e.comment;
+  }
+  return '';
 }
 
 function buildIngredientsXLSX(plan, dates, customer) {
@@ -2350,7 +2367,7 @@ function buildIngredientsXLSX(plan, dates, customer) {
       const r = 4 + ri;
       const cells = colGroups.map((cols, mi) => {
         const ing = mealIngredients[mi][ri] || '';
-        const invComment = ing ? (invMap[ing.toLowerCase()] || '') : '';
+        const invComment = ing ? lookupInventoryComment(invMap, ing) : '';
         return [
           `<c r="${cols[0]}${r}" t="inlineStr" s="3"><is><t>${xmlEsc(ing)}</t></is></c>`,
           `<c r="${cols[1]}${r}" s="3"/>`,
