@@ -686,7 +686,8 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
           <tr style="background:var(--green-lt);color:var(--green-dk)">
             <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Meal</th>
             <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Dish</th>
-            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Hindi Recipe (under 6 min)</th>
+            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">YouTube</th>
+            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Rasoi</th>
           </tr>
         </thead>
         <tbody id="recipes-tbody"></tbody>
@@ -1747,6 +1748,11 @@ function buildYoutubeSearchUrl(dish) {
   return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(dish.trim() + ' recipe hindi') + '&sp=EgIYAQ%3D%3D';
 }
 
+function buildRasoiUrl(dish) {
+  const slug = dish.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return 'https://recipe-voice-finder.emergent.host/recipe/' + slug;
+}
+
 function splitDishes(dishStr) {
   if (!dishStr || dishStr.trim() === '' || dishStr.trim().toLowerCase() === 'no meal set') return [];
   return dishStr.split('+').map(d => d.trim()).filter(d => d.length > 0);
@@ -1927,14 +1933,18 @@ function downloadDayRecipes(event, dayIdx) {
   if (!entries.length) { toast('No dishes for this day', '!'); return; }
 
   document.getElementById('modal-recipes-title').textContent = dayName + ' — Recipe Links';
-  document.getElementById('recipes-modal-note').textContent = 'Opens YouTube search · Hindi videos under 6 minutes';
+  document.getElementById('recipes-modal-note').textContent = 'YouTube: Hindi videos under 6 min · Rasoi: recipe-voice-finder';
   document.getElementById('recipes-tbody').innerHTML = entries.map(e => `
     <tr style="border-bottom:1px solid var(--border)">
       <td style="padding:10px 14px;font-weight:600;color:${mealColors[e.meal]||'var(--text)'};white-space:nowrap">${e.meal}</td>
       <td style="padding:10px 14px;color:var(--text)">${e.dish}</td>
       <td style="padding:10px 14px">
         <a href="${buildYoutubeSearchUrl(e.dish)}" target="_blank" rel="noopener"
-           style="color:var(--green);font-weight:600;text-decoration:none">▶ Watch Recipe</a>
+           style="color:var(--green);font-weight:600;text-decoration:none">▶ YouTube</a>
+      </td>
+      <td style="padding:10px 14px">
+        <a href="${buildRasoiUrl(e.dish)}" target="_blank" rel="noopener"
+           style="color:var(--amber);font-weight:600;text-decoration:none">🍳 Rasoi</a>
       </td>
     </tr>`).join('');
   openModal('modal-recipes');
