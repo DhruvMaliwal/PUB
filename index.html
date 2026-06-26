@@ -760,7 +760,11 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
         <input type="file" id="inv-file-input" accept="image/*" multiple style="display:none">
       </div>
       <div id="inv-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
-      <button class="btn btn-green" id="inv-save-btn" onclick="saveInventoryUpload()" style="width:100%;display:none">Save Upload</button>
+      <div style="margin-bottom:12px">
+        <div class="input-label">Item Notes <span style="font-weight:400;color:var(--text-3)">(one per line: ingredient name: status/comment)</span></div>
+        <textarea id="inv-notes" class="input" rows="5" placeholder="tomato: low stock&#10;paneer: 340g left&#10;onion: available&#10;garlic: finished - need to order"></textarea>
+      </div>
+      <button class="btn btn-green" id="inv-save-btn" onclick="saveInventoryUpload()" style="width:100%">Save Upload</button>
       <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
       <div style="font-weight:700;font-size:14px;margin-bottom:10px">Upload History</div>
       <div id="inv-history" style="font-size:13px;color:var(--text-3)">No uploads yet</div>
@@ -2004,7 +2008,7 @@ let pendingInvFiles = [];
 function openInventoryModal() {
   pendingInvFiles = [];
   document.getElementById('inv-preview').innerHTML = '';
-  document.getElementById('inv-save-btn').style.display = 'none';
+  document.getElementById('inv-notes').value = '';
   const today = new Date();
   document.getElementById('inv-date').value = today.toISOString().split('T')[0];
   document.getElementById('inv-type').value = 'check';
@@ -2047,7 +2051,7 @@ function renderInvPreviews() {
       <img src="${f.data}" style="width:100%;height:100%;object-fit:cover">
       <button onclick="removeInvFile(${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
     </div>`).join('');
-  document.getElementById('inv-save-btn').style.display = pendingInvFiles.length ? 'block' : 'none';
+  // save btn is always visible
 }
 
 function removeInvFile(idx) {
@@ -2056,10 +2060,11 @@ function removeInvFile(idx) {
 }
 
 function saveInventoryUpload() {
-  if (!pendingInvFiles.length) { toast('Add at least one image', '!'); return; }
   const date = document.getElementById('inv-date').value;
   const type = document.getElementById('inv-type').value;
+  const notes = document.getElementById('inv-notes').value.trim();
   if (!date) { toast('Select a date', '!'); return; }
+  if (!pendingInvFiles.length && !notes) { toast('Add images or item notes', '!'); return; }
   const key = 'inventory_' + state.currentCustomerId;
   let uploads = [];
   try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
@@ -2067,6 +2072,7 @@ function saveInventoryUpload() {
     id: 'inv' + Date.now(),
     date,
     type,
+    notes,
     images: pendingInvFiles.map(f => f.data),
     imageNames: pendingInvFiles.map(f => f.name),
     createdAt: new Date().toISOString()
@@ -2079,7 +2085,7 @@ function saveInventoryUpload() {
   }
   pendingInvFiles = [];
   document.getElementById('inv-preview').innerHTML = '';
-  document.getElementById('inv-save-btn').style.display = 'none';
+  document.getElementById('inv-notes').value = '';
   renderInventoryHistory();
   toast('Inventory upload saved ✓');
 }
@@ -2103,6 +2109,7 @@ function renderInventoryHistory() {
         </div>
         <button onclick="deleteInventoryUpload('${u.id}')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:12px;font-weight:600">Delete</button>
       </div>
+      ${u.notes ? `<div style="font-size:12px;color:var(--text-2);background:var(--bg);border-radius:4px;padding:7px 9px;margin-bottom:8px;white-space:pre-line">${u.notes.replace(/</g,'&lt;')}</div>` : ''}
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${u.images.map((img, i) => `
           <a href="${img}" target="_blank" style="display:block;width:64px;height:64px;border-radius:4px;overflow:hidden;border:1px solid var(--border)">
@@ -2222,6 +2229,25 @@ function getIngredientsForDish(dishStr) {
   return list.filter(ing => !isPantryItem(ing));
 }
 
+function getInventoryCommentMap() {
+  // Returns a map of lowercase ingredient name → comment from the most recent inventory upload
+  const key = 'inventory_' + state.currentCustomerId;
+  let uploads = [];
+  try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  // Sort by date desc and pick the most recent with notes
+  const sorted = uploads.filter(u => u.notes && u.notes.trim()).sort((a, b) => b.date.localeCompare(a.date));
+  if (!sorted.length) return {};
+  const map = {};
+  sorted[0].notes.split('\n').forEach(line => {
+    const idx = line.indexOf(':');
+    if (idx < 1) return;
+    const name = line.slice(0, idx).trim().toLowerCase();
+    const comment = line.slice(idx + 1).trim();
+    if (name && comment) map[name] = comment;
+  });
+  return map;
+}
+
 function buildIngredientsXLSX(plan, dates, customer) {
   const AVAIL_LIST = 'Available in inventory,Not available in inventory,Dont know';
   const STATUS_LIST = 'Blinkit,Swiggy Instamart,Zepto,FirstClub,Fresh2Home,Licious,Big Basket,Handpickd,Needs to be added to cart';
@@ -2273,8 +2299,9 @@ function buildIngredientsXLSX(plan, dates, customer) {
     }).filter(Boolean).join(' | ');
     const contextStr = dayLabel + (dishes ? ' — ' + dishes : '');
 
-    // Cols: A-C = Breakfast, D-F = Lunch, G-I = Dinner
-    // Row 2: section headers (merged A2:C2, D2:F2, G2:I2)
+    // Cols: A-D = Breakfast, E-H = Lunch, I-L = Dinner
+    // 4 cols per meal: Ingredients, Availability, Status, Inventory Comment
+    // Row 2: section headers (merged A2:D2, E2:H2, I2:L2)
     // Row 3: sub-headers
     // Rows 4..(3+DATA_ROWS): data rows
 
@@ -2289,43 +2316,54 @@ function buildIngredientsXLSX(plan, dates, customer) {
       return all;
     });
 
+    const invMap = getInventoryCommentMap();
     const maxIngredients = Math.max(...mealIngredients.map(a => a.length), 0);
     const DATA_ROWS = Math.max(maxIngredients + 5, 20);
     const lastDataRow = 3 + DATA_ROWS;
 
     const xmlEsc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-    // Section header row (style 1 = dark blue)
+    // Column letters for 3 groups of 4
+    const colGroups = [
+      ['A','B','C','D'],
+      ['E','F','G','H'],
+      ['I','J','K','L']
+    ];
+
+    // Section header row (style 1 = dark blue, merged across 4 cols)
     const secRow = mealTitles.map((t, mi) => {
-      const cols = [['A','B','C'],['D','E','F'],['G','H','I']][mi];
-      return cols.map((col, ci) =>
+      return colGroups[mi].map((col, ci) =>
         `<c r="${col}2" t="inlineStr" s="1"><is><t>${ci===0?t:''}</t></is></c>`
       ).join('');
     }).join('');
 
     // Sub-header row (style 2 = medium blue)
-    const subLabels = ['Ingredients','Availability','Status'];
-    const subRow = ['A','D','G'].map((startCol, mi) => {
-      const cols = [['A','B','C'],['D','E','F'],['G','H','I']][mi];
-      return cols.map((col, ci) =>
+    const subLabels = ['Ingredients','Availability','Status','Inventory Comment'];
+    const subRow = colGroups.map(cols =>
+      cols.map((col, ci) =>
         `<c r="${col}3" t="inlineStr" s="2"><is><t>${subLabels[ci]}</t></is></c>`
-      ).join('');
-    }).join('');
+      ).join('')
+    ).join('');
 
-    // Data rows — populated with ingredients
-    const colGroups = [['A','B','C'],['D','E','F'],['G','H','I']];
+    // Data rows — populated with ingredients + inventory comment
     const dataRows = Array.from({length: DATA_ROWS}, (_, ri) => {
       const r = 4 + ri;
       const cells = colGroups.map((cols, mi) => {
         const ing = mealIngredients[mi][ri] || '';
-        return `<c r="${cols[0]}${r}" t="inlineStr" s="3"><is><t>${xmlEsc(ing)}</t></is></c><c r="${cols[1]}${r}" s="3"/><c r="${cols[2]}${r}" s="3"/>`;
+        const invComment = ing ? (invMap[ing.toLowerCase()] || '') : '';
+        return [
+          `<c r="${cols[0]}${r}" t="inlineStr" s="3"><is><t>${xmlEsc(ing)}</t></is></c>`,
+          `<c r="${cols[1]}${r}" s="3"/>`,
+          `<c r="${cols[2]}${r}" s="3"/>`,
+          `<c r="${cols[3]}${r}" t="inlineStr" s="3"><is><t>${xmlEsc(invComment)}</t></is></c>`
+        ].join('');
       }).join('');
       return `<row r="${r}">${cells}</row>`;
     }).join('');
 
-    // Data validations
-    const availSqref = `B4:B${lastDataRow} E4:E${lastDataRow} H4:H${lastDataRow}`;
-    const statusSqref = `C4:C${lastDataRow} F4:F${lastDataRow} I4:I${lastDataRow}`;
+    // Data validations (cols B,F,J = Availability; C,G,K = Status)
+    const availSqref = `B4:B${lastDataRow} F4:F${lastDataRow} J4:J${lastDataRow}`;
+    const statusSqref = `C4:C${lastDataRow} G4:G${lastDataRow} K4:K${lastDataRow}`;
 
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
@@ -2334,12 +2372,15 @@ function buildIngredientsXLSX(plan, dates, customer) {
     <col min="1" max="1" width="28" customWidth="1"/>
     <col min="2" max="2" width="22" customWidth="1"/>
     <col min="3" max="3" width="22" customWidth="1"/>
-    <col min="4" max="4" width="28" customWidth="1"/>
-    <col min="5" max="5" width="22" customWidth="1"/>
+    <col min="4" max="4" width="26" customWidth="1"/>
+    <col min="5" max="5" width="28" customWidth="1"/>
     <col min="6" max="6" width="22" customWidth="1"/>
-    <col min="7" max="7" width="28" customWidth="1"/>
-    <col min="8" max="8" width="22" customWidth="1"/>
-    <col min="9" max="9" width="22" customWidth="1"/>
+    <col min="7" max="7" width="22" customWidth="1"/>
+    <col min="8" max="8" width="26" customWidth="1"/>
+    <col min="9" max="9" width="28" customWidth="1"/>
+    <col min="10" max="10" width="22" customWidth="1"/>
+    <col min="11" max="11" width="22" customWidth="1"/>
+    <col min="12" max="12" width="26" customWidth="1"/>
   </cols>
   <sheetData>
     <row r="1"><c r="A1" t="inlineStr" s="4"><is><t>${contextStr.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</t></is></c></row>
@@ -2348,9 +2389,9 @@ function buildIngredientsXLSX(plan, dates, customer) {
     ${dataRows}
   </sheetData>
   <mergeCells count="3">
-    <mergeCell ref="A2:C2"/>
-    <mergeCell ref="D2:F2"/>
-    <mergeCell ref="G2:I2"/>
+    <mergeCell ref="A2:D2"/>
+    <mergeCell ref="E2:H2"/>
+    <mergeCell ref="I2:L2"/>
   </mergeCells>
   <dataValidations count="2">
     <dataValidation type="list" showDropDown="0" sqref="${availSqref}">
