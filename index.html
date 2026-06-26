@@ -2006,17 +2006,38 @@ const INGREDIENT_DB = {
   'chhole': ['Kabuli chana (chickpeas)','Onion','Tomato','Ginger','Garlic','Green chillies','Chole masala powder','Cumin seeds','Bay leaf','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Amchur','Oil','Salt','Coriander leaves'],
 };
 
+const PANTRY_FILTER = [
+  'water','salt','oil','ghee','butter','sugar',
+  'turmeric powder','red chilli powder','kashmiri red chilli powder','coriander powder',
+  'garam masala','cumin seeds','cumin powder','mustard seeds','chaat masala',
+  'amchur','amchur powder','dry mango powder','hing','hing (asafoetida)',
+  'bay leaf','cinnamon','cardamom','cloves','saffron','black pepper',
+  'chole masala powder','chana masala powder','sambar powder','biryani masala',
+  'pav bhaji masala','peri peri spice mix','kasuri methi','baking soda',
+];
+
+function isPantryItem(ing) {
+  const n = ing.toLowerCase().replace(/\s*\(.*?\)\s*/g,'').trim();
+  if (PANTRY_FILTER.includes(n)) return true;
+  if (/powder$|masala$|seeds$/.test(n)) return true;
+  return false;
+}
+
 function getIngredientsForDish(dishStr) {
   if (!dishStr) return [];
   const norm = dishStr.trim().toLowerCase()
-    .replace(/\s*\(.*?\)\s*/g, '')   // strip parentheticals like "(5 cups)" or "(soak overnight)"
-    .replace(/\d+\s*/g, '')          // strip numbers like "15 rotis" → "rotis"
+    .replace(/\s*\(.*?\)\s*/g, '')
+    .replace(/\d+\s*/g, '')
     .trim();
-  if (INGREDIENT_DB[norm]) return [...INGREDIENT_DB[norm]];
-  for (const key of Object.keys(INGREDIENT_DB)) {
-    if (norm.includes(key) || key.includes(norm)) return [...INGREDIENT_DB[key]];
+  let list = null;
+  if (INGREDIENT_DB[norm]) list = [...INGREDIENT_DB[norm]];
+  else {
+    for (const key of Object.keys(INGREDIENT_DB)) {
+      if (norm.includes(key) || key.includes(norm)) { list = [...INGREDIENT_DB[key]]; break; }
+    }
   }
-  return [dishStr.trim() + ' (ingredients TBD)'];
+  if (!list) return [dishStr.trim() + ' (ingredients TBD)'];
+  return list.filter(ing => !isPantryItem(ing));
 }
 
 function buildIngredientsXLSX(plan, dates, customer) {
