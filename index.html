@@ -807,6 +807,9 @@ let CSV_RECIPE_DB = null;
   fetch('recipes.json').then(r=>r.json()).then(d=>{CSV_RECIPE_DB=d;}).catch(()=>{});
 })();
 
+let AI_INGREDIENT_CACHE = {};
+try { AI_INGREDIENT_CACHE = JSON.parse(localStorage.getItem('ai_ingredient_cache') || '{}'); } catch(e) {}
+
 let state = {
   customers: [
     {id:'c1', name:'Akhil', members:1},
@@ -2239,10 +2242,83 @@ function deleteInventoryUpload(id) {
   toast('Upload deleted');
 }
 
-function openIngredientsSheet() {
+function collectTBDDishes(plan) {
+  const tbdSet = new Set();
+  for (const day of plan) {
+    for (const m of ['breakfast','lunch','dinner']) {
+      const dishes = splitDishes(day[m].dish);
+      for (const d of dishes) {
+        const ings = getIngredientsForDish(d);
+        if (ings.length === 1 && ings[0].endsWith('(ingredients TBD)')) {
+          tbdSet.add(d.trim());
+        }
+      }
+    }
+  }
+  return [...tbdSet];
+}
+
+async function resolveUnknownIngredients(tbdDishes) {
+  const apiKey = localStorage.getItem('anthropic_api_key');
+  if (!apiKey) return false;
+  if (!tbdDishes.length) return true;
+
+  const prompt = `For each dish below, list its main cooking ingredients (not pantry staples like salt, oil, water, sugar). Return ONLY a JSON object mapping each dish name (exactly as given) to an array of ingredient strings. No explanation.
+
+Dishes:
+${tbdDishes.map(d => '- ' + d).join('\n')}`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-ipc': 'true',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!resp.ok) throw new Error('API error ' + resp.status);
+  const data = await resp.json();
+  const text = data.content?.[0]?.text || '';
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return false;
+
+  const result = JSON.parse(jsonMatch[0]);
+  for (const [dish, ings] of Object.entries(result)) {
+    if (Array.isArray(ings)) {
+      const norm = dish.trim().toLowerCase().replace(/\s*\(.*?\)\s*/g, '').replace(/\d+\s*/g, '').trim();
+      AI_INGREDIENT_CACHE[norm] = ings.map(i => i.toLowerCase().trim());
+    }
+  }
+  localStorage.setItem('ai_ingredient_cache', JSON.stringify(AI_INGREDIENT_CACHE));
+  return true;
+}
+
+async function openIngredientsSheet() {
   const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
   const dates = weekDates(state.planWeekOffset);
   const c = state.customers.find(x => x.id === state.currentCustomerId);
+
+  const tbdDishes = collectTBDDishes(plan);
+  if (tbdDishes.length > 0) {
+    const apiKey = localStorage.getItem('anthropic_api_key');
+    if (apiKey) {
+      toast('Looking up ' + tbdDishes.length + ' unknown dish' + (tbdDishes.length > 1 ? 'es' : '') + ' with AI…');
+      try {
+        await resolveUnknownIngredients(tbdDishes);
+        toast('AI found ingredients for ' + tbdDishes.length + ' dish' + (tbdDishes.length > 1 ? 'es' : '') + ' ✓');
+      } catch(e) {
+        toast('AI lookup failed: ' + e.message + ' — exporting with TBD', '!');
+      }
+    }
+  }
+
   try {
     const bytes = buildIngredientsXLSX(plan, dates, c);
     const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -2443,6 +2519,7 @@ function getIngredientsForDish(dishStr) {
       }
     }
   }
+  if (!list && AI_INGREDIENT_CACHE[norm]) list = [...AI_INGREDIENT_CACHE[norm]];
   if (!list) return [dishStr.trim() + ' (ingredients TBD)'];
   return list.filter(ing => !isPantryItem(ing));
 }
