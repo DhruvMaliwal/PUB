@@ -478,7 +478,8 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
         <div class="upload-zone" id="upload-zone"
              ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
           <input type="file" id="file-input" accept=".xlsx,.xls,.csv"
-                 onchange="onFileSelect(event)" onclick="event.stopPropagation()">
+                 onchange="onFileSelect(event)" onclick="event.stopPropagation()"
+                 ondragover="onDragOver(event)" ondrop="onDrop(event)">
           <div class="upload-icon">📤</div>
           <div class="upload-title">Upload Menu Spreadsheet</div>
           <div class="upload-sub">Drag &amp; drop or click to browse</div>
@@ -1203,9 +1204,14 @@ function applyPlanData(customerId, weekOffset, data) {
     breakfast:{dish:'',servings:2}, lunch:{dish:'',servings:2}, dinner:{dish:'',servings:3}
   }));
   for (const row of data) {
-    const di = DAYS_OF_WEEK.map(d=>d.toLowerCase()).indexOf(row.day.toLowerCase());
+    const dayLower = row.day.toLowerCase().trim();
+    let di = DAYS_OF_WEEK.map(d=>d.toLowerCase()).indexOf(dayLower);
+    if (di < 0) di = DAYS_OF_WEEK.findIndex(d => d.toLowerCase().startsWith(dayLower.slice(0,3)));
     if (di < 0) continue;
-    const mealKey = row.meal.toLowerCase();
+    let mealKey = row.meal.toLowerCase().trim();
+    if (mealKey.startsWith('b')) mealKey = 'breakfast';
+    else if (mealKey.startsWith('l')) mealKey = 'lunch';
+    else if (mealKey.startsWith('d') || mealKey.startsWith('s')) mealKey = 'dinner';
     if (!['breakfast','lunch','dinner'].includes(mealKey)) continue;
     const existing = week[di][mealKey];
     const dish = existing.dish ? existing.dish + '\n' + row.dish : row.dish;
@@ -1311,20 +1317,26 @@ async function parseXLSX(buffer) {
 
   // Parse cells
   const rows = {};
-  const cellRegex = /<c r="([A-Z]+)(\d+)"[^>]*(?:t="([^"]*)")?[^>]*>(?:<v>([^<]*)<\/v>)?/g;
+  const cellRegex = /<c r="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>([^]*?)<\/c>)/g;
   let m;
   while ((m = cellRegex.exec(sheetXml)) !== null) {
     const col = colToIdx(m[1]);
     const row = parseInt(m[2]) - 1;
-    const type = m[3];
-    const raw = m[4]||'';
+    const attrs = m[3] || '';
+    const inner = m[4] || '';
+    const typeMatch = attrs.match(/t="([^"]*)"/);
+    const type = typeMatch ? typeMatch[1] : '';
     let val = '';
-    if (type === 's') val = sharedStrings[parseInt(raw)]||'';
-    else if (type === 'inlineStr') {
-      const inlineMatch = sheetXml.slice(m.index).match(/<is><t[^>]*>([^<]*)<\/t>/);
-      val = inlineMatch ? decodeXML(inlineMatch[1]) : raw;
+    if (type === 's') {
+      const vMatch = inner.match(/<v>([^<]*)<\/v>/);
+      val = vMatch ? (sharedStrings[parseInt(vMatch[1])]||'') : '';
+    } else if (type === 'inlineStr') {
+      const isMatch = inner.match(/<is><t[^>]*>([^<]*)<\/t>/);
+      val = isMatch ? decodeXML(isMatch[1]) : '';
+    } else {
+      const vMatch = inner.match(/<v>([^<]*)<\/v>/);
+      val = vMatch ? vMatch[1] : '';
     }
-    else val = raw;
     if (!rows[row]) rows[row]={};
     rows[row][col] = val;
   }
