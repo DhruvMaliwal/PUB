@@ -959,6 +959,12 @@ function goToPlan() {
   state.currentCustomerId = state.selectedHouseId;
   state.planWeekOffset = state.homeWeekOffset;
   state.selectedDays = new Set();
+
+  if (state.pendingImportData) {
+    applyPlanData(state.currentCustomerId, state.planWeekOffset, state.pendingImportData);
+    state.pendingImportData = null;
+  }
+
   showScreen('screen-plan');
   renderPlanHeader();
   renderDayGrid();
@@ -1222,7 +1228,7 @@ function applyPlanData(customerId, weekOffset, data) {
 }
 
 function countMeals(data) { return data.filter(r=>r.dish).length; }
-function countDays(data) { return new Set(data.map(r=>r.day.toLowerCase())).size; }
+function countDays(data) { return new Set(data.map(r=>r.day.toLowerCase().trim())).size; }
 
 // ─── FILE PARSING ─────────────────────────────────────────────────────────────
 async function parseFile(file) {
@@ -1238,6 +1244,7 @@ async function parseFile(file) {
 }
 
 function parseCSV(text) {
+  text = text.replace(/^﻿/, '');
   const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
   if (lines.length < 2) throw new Error('File appears empty');
   // Parse header
@@ -1783,25 +1790,6 @@ function showCopyOk() {
   setTimeout(() => { el.style.display = 'none'; }, 2500);
 }
 
-// ─── GOTO PLAN (from home) ────────────────────────────────────────────────────
-const _origGoToPlan = goToPlan;
-// Override to also apply imported data
-window.goToPlan = function() {
-  if (!state.selectedHouseId) return;
-  state.currentCustomerId = state.selectedHouseId;
-  state.planWeekOffset = state.homeWeekOffset;
-  state.selectedDays = new Set();
-
-  // Apply pending imported data if any
-  if (state.pendingImportData) {
-    applyPlanData(state.currentCustomerId, state.planWeekOffset, state.pendingImportData);
-    state.pendingImportData = null;
-  }
-
-  showScreen('screen-plan');
-  renderPlanHeader();
-  renderDayGrid();
-};
 
 // ─── MODAL HELPERS ────────────────────────────────────────────────────────────
 function openModal(id) { document.getElementById(id).classList.add('open'); }
