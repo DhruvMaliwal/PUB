@@ -802,6 +802,11 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
 const DAYS_OF_WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+let CSV_RECIPE_DB = null;
+(function loadCSVRecipes(){
+  fetch('recipes.json').then(r=>r.json()).then(d=>{CSV_RECIPE_DB=d;}).catch(()=>{});
+})();
+
 let state = {
   customers: [
     {id:'c1', name:'Akhil', members:1},
@@ -2428,6 +2433,14 @@ function getIngredientsForDish(dishStr) {
   else {
     for (const key of Object.keys(INGREDIENT_DB)) {
       if (norm.includes(key) || key.includes(norm)) { list = [...INGREDIENT_DB[key]]; break; }
+    }
+  }
+  if (!list && CSV_RECIPE_DB) {
+    if (CSV_RECIPE_DB[norm]) list = [...CSV_RECIPE_DB[norm]];
+    else {
+      for (const key of Object.keys(CSV_RECIPE_DB)) {
+        if (norm.includes(key) || key.includes(norm)) { list = [...CSV_RECIPE_DB[key]]; break; }
+      }
     }
   }
   if (!list) return [dishStr.trim() + ' (ingredients TBD)'];
