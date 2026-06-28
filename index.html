@@ -471,6 +471,17 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
 }
 .link-clear-btn:hover { background: rgba(0,0,0,0.06); color: var(--red); }
 
+/* Preference checkbox (mark preferred video source) */
+.pref-wrap {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
+  font-size: 11px; color: var(--text-3); cursor: pointer; user-select: none;
+}
+.pref-wrap input[type=checkbox] {
+  accent-color: var(--green); width: 14px; height: 14px; cursor: pointer; margin: 0;
+}
+.pref-wrap.is-preferred { color: var(--green); font-weight: 700; }
+.watch-cell-inner { display: flex; flex-direction: column; align-items: flex-start; }
+
 .yt-play-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0;
@@ -891,19 +902,20 @@ let state = {
   selectedHouseId: null,
   pendingImportData: null,
   savedLinks: {}, // { "customerId|weekKey|dishname": "videoId" }
+  preferred: {}, // { linkKey: "auto" | "custom" } — which video source the user prefers
   editTarget: null, // {dayIdx, meal}
   importContext: 'home', // 'home' | 'plan'
 };
 
 // Persist
 function saveState() {
-  try { localStorage.setItem('menuPlanner_v2', JSON.stringify({customers:state.customers, plans:state.plans, savedLinks:state.savedLinks})); }
+  try { localStorage.setItem('menuPlanner_v2', JSON.stringify({customers:state.customers, plans:state.plans, savedLinks:state.savedLinks, preferred:state.preferred})); }
   catch(e){}
 }
 function loadState() {
   try {
     const d = JSON.parse(localStorage.getItem('menuPlanner_v2')||'null');
-    if (d) { state.customers = d.customers||state.customers; state.plans = d.plans||{}; state.savedLinks = d.savedLinks||{}; }
+    if (d) { state.customers = d.customers||state.customers; state.plans = d.plans||{}; state.savedLinks = d.savedLinks||{}; state.preferred = d.preferred||{}; }
   } catch(e){}
 }
 
@@ -1955,24 +1967,39 @@ function openRecipeLinks(event, dayIdx) {
       const safeClean = clean.replace(/'/g, "\\'").replace(/"/g, '&quot;');
       const linkKey = makeLinkKey(dayIdx, clean);
       const savedId = state.savedLinks[linkKey] || '';
+      const pref = state.preferred[linkKey] || (savedId ? 'custom' : 'auto');
+      const autoPref = pref === 'auto';
+      const customPref = pref === 'custom';
       rows += `<tr>
         <td><span class="recipe-meal-label ${m.key}">${m.label}</span></td>
         <td class="recipe-dish-name">${esc(part.trim())}</td>
         <td>
-          <button class="yt-play-btn" onclick="playDishVideo('${safeClean}','${linkKey}')"
-            ${savedId ? 'style="border-color:var(--green);color:var(--green);background:var(--green-lt)"' : ''}>
-            <span class="yt-icon">▶</span> ${savedId ? 'Your Video' : 'Watch'}
-          </button>
+          <div class="watch-cell-inner">
+            <button class="yt-play-btn" onclick="playDishVideo('${safeClean}','${linkKey}','auto')">
+              <span class="yt-icon">▶</span> Watch
+            </button>
+            <label class="pref-wrap ${autoPref?'is-preferred':''}" onclick="event.stopPropagation()">
+              <input type="checkbox" ${autoPref?'checked':''} onchange="setPreferred('${linkKey}','auto')">
+              Prefer this
+            </label>
+          </div>
         </td>
         <td>
-          <div class="link-cell">
-            <input class="link-input ${savedId?'has-saved':''}" type="text"
-              id="lnk-${linkKey}"
-              placeholder="Paste YouTube link"
-              value="${savedId ? 'https://youtu.be/'+savedId : ''}"
-              onclick="event.stopPropagation()">
-            <button class="link-save-btn" onclick="saveCustomLink('${linkKey}')">${savedId?'Update':'Save'}</button>
-            ${savedId ? `<button class="link-clear-btn" onclick="clearCustomLink('${linkKey}')" title="Remove saved link">✕</button>` : ''}
+          <div class="watch-cell-inner">
+            <div class="link-cell">
+              <input class="link-input ${savedId?'has-saved':''}" type="text"
+                id="lnk-${linkKey}"
+                placeholder="Paste YouTube link"
+                value="${savedId ? 'https://youtu.be/'+savedId : ''}"
+                onclick="event.stopPropagation()">
+              <button class="link-save-btn" onclick="saveCustomLink('${linkKey}')">${savedId?'Update':'Save'}</button>
+              ${savedId ? `<button class="link-clear-btn" onclick="clearCustomLink('${linkKey}')" title="Remove saved link">✕</button>` : ''}
+            </div>
+            ${savedId ? `
+            <label class="pref-wrap ${customPref?'is-preferred':''}" onclick="event.stopPropagation()">
+              <input type="checkbox" ${customPref?'checked':''} onchange="setPreferred('${linkKey}','custom')">
+              Prefer this · <span style="color:var(--green);cursor:pointer;text-decoration:underline" onclick="playDishVideo('${safeClean}','${linkKey}','custom')">play</span>
+            </label>` : ''}
           </div>
         </td>
       </tr>`;
@@ -2039,9 +2066,18 @@ function saveCustomLink(linkKey) {
 
 function clearCustomLink(linkKey) {
   delete state.savedLinks[linkKey];
+  delete state.preferred[linkKey];
   saveState();
   openRecipeLinks({ stopPropagation(){} }, currentRecipeDayIdx);
   toast('Custom link removed');
+}
+
+function setPreferred(linkKey, source) {
+  // Toggle: if already preferred, clicking again leaves it (radio-like, one wins)
+  state.preferred[linkKey] = source;
+  saveState();
+  openRecipeLinks({ stopPropagation(){} }, currentRecipeDayIdx);
+  toast(source === 'custom' ? 'Preferring your video ✓' : 'Preferring suggested video ✓');
 }
 
 function showRecipeList() {
@@ -2061,7 +2097,7 @@ function destroyPlayer() {
   document.getElementById('video-meta-row').style.display = 'none';
 }
 
-async function playDishVideo(dishName, linkKey) {
+async function playDishVideo(dishName, linkKey, source) {
   document.getElementById('recipe-list-view').classList.add('hidden');
   document.getElementById('video-player-view').classList.add('active');
   document.getElementById('video-dish-title').textContent = dishName;
@@ -2069,17 +2105,22 @@ async function playDishVideo(dishName, linkKey) {
   destroyPlayer();
   document.getElementById('video-loading').style.display = 'flex';
 
-  // If user saved a custom link for this dish, play it directly — skip search
-  if (linkKey && state.savedLinks[linkKey]) {
-    embedVideo(state.savedLinks[linkKey], 'Your saved video', '');
+  const savedId = linkKey ? state.savedLinks[linkKey] : '';
+  // Resolve which source to use:
+  // - explicit source arg wins (from a specific play button)
+  // - else fall back to the saved preference
+  // - else: custom if it exists, otherwise auto
+  let useSource = source || (linkKey && state.preferred[linkKey]) || (savedId ? 'custom' : 'auto');
+
+  // Play the user's custom video directly if that's the choice
+  if (useSource === 'custom' && savedId) {
+    embedVideo(savedId, 'Your saved video', '');
     return;
   }
 
+  // Otherwise auto-search
   const query = dishName + ' recipe Hindi';
-
-  // Race ALL strategies in parallel — first success wins
   const result = await raceAllStrategies(query);
-
   if (result && result.id) {
     embedVideo(result.id, result.title || '', result.channel || '');
   } else {
