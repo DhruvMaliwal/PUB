@@ -482,6 +482,36 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
 .pref-wrap.is-preferred { color: var(--green); font-weight: 700; }
 .watch-cell-inner { display: flex; flex-direction: column; align-items: flex-start; }
 
+/* Weekly ingredients list */
+.ing-group { margin-bottom: 18px; }
+.ing-group-title {
+  font-size: 12px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--green); padding-bottom: 6px; margin-bottom: 8px;
+  border-bottom: 2px solid var(--green-lt);
+}
+.ing-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; }
+@media (max-width: 560px) { .ing-list { grid-template-columns: 1fr; } }
+.ing-item {
+  display: flex; align-items: center; gap: 8px; padding: 5px 4px;
+  font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--border-lt);
+}
+.ing-item input[type=checkbox] { accent-color: var(--green); width: 15px; height: 15px; cursor: pointer; }
+.ing-item.checked { color: var(--text-3); text-decoration: line-through; }
+.ing-qty { color: var(--text-2); font-weight: 600; font-size: 12.5px; }
+.ing-loading { text-align: center; padding: 40px 20px; color: var(--text-3); }
+.ing-loading .vl-spinner {
+  width: 30px; height: 30px; border: 3px solid var(--border);
+  border-top-color: var(--green); border-radius: 50%;
+  animation: vl-spin 0.8s linear infinite; margin: 0 auto 14px;
+}
+.ing-summary {
+  font-size: 13px; color: var(--text-2); margin-bottom: 16px;
+  padding: 10px 14px; background: var(--green-xl); border-radius: var(--r-sm);
+}
+.ing-unmatched {
+  font-size: 12.5px; color: var(--amber); margin-top: 4px;
+}
+
 .yt-play-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0;
@@ -658,6 +688,7 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
               style="display:none" onclick="openExportModal()">
         ⬇ Download Selected
       </button>
+      <button class="btn btn-amber" onclick="openIngredientsModal()">🧺 Ingredients</button>
       <button class="btn btn-outline" onclick="selectAll()">Select All</button>
       <button class="btn btn-outline" onclick="clearSelection()">Deselect</button>
       <button class="btn btn-outline" onclick="openUploadModal()">✏️ Edit Plan</button>
@@ -871,6 +902,23 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
     </div>
     <div class="recipe-footer-hint" id="recipe-footer-hint">
       ▶ Click a dish to watch the top recipe video
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Weekly Ingredients ──── -->
+<div class="modal-backdrop recipe-modal" id="modal-ingredients" onclick="closeModalBackdrop(event,'modal-ingredients')">
+  <div class="modal" style="width:680px">
+    <div class="modal-header">
+      <div class="modal-title" id="ingredients-modal-title">🧺 Weekly Shopping List</div>
+      <button class="modal-close" onclick="closeModal('modal-ingredients')">✕</button>
+    </div>
+    <div class="modal-body" id="ingredients-body" style="padding:18px 22px">
+      <!-- JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="copyIngredients()">📋 Copy List</button>
+      <button class="btn btn-green" onclick="closeModal('modal-ingredients')">Done</button>
     </div>
   </div>
 </div>
@@ -1934,6 +1982,156 @@ let ytApiLoaded = false;
   document.head.appendChild(tag);
 })();
 function onYouTubeIframeAPIReady() { ytApiLoaded = true; }
+
+// ─── WEEKLY INGREDIENTS ──────────────────────────────────────────────────────
+let RECIPE_DB = null;
+let lastIngredientList = [];
+
+async function loadRecipeDB() {
+  if (RECIPE_DB) return RECIPE_DB;
+  const [recipesRes, catRes] = await Promise.all([
+    fetch('recipes.json'),
+    fetch('ingredients_cat.json').catch(() => null),
+  ]);
+  RECIPE_DB = await recipesRes.json();
+  RECIPE_DB.forEach(r => { r._n = r.n.toLowerCase(); });
+  if (catRes && catRes.ok) {
+    try { window.ING_CAT = await catRes.json(); } catch(e) {}
+  }
+  return RECIPE_DB;
+}
+
+// Tokenize a dish name into meaningful words for matching
+function dishTokens(s) {
+  return s.toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\d+\s*(cups?|rotis?|pieces?|pcs?|tbsp|tsp|g|kg|ml)/gi, ' ')
+    .replace(/[^a-z\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !['the','and','with','recipe','style','for','one','portion','less','spicy'].includes(w));
+}
+
+// Find best-matching recipe for a dish name
+function matchRecipe(dishName) {
+  const tokens = dishTokens(dishName);
+  if (!tokens.length) return null;
+  let best = null, bestScore = 0;
+  for (const r of RECIPE_DB) {
+    let score = 0;
+    for (const t of tokens) {
+      if (r._n.includes(t)) score++;
+    }
+    // Normalize: prefer recipes where most of the dish's words match
+    const norm = score / tokens.length;
+    if (score > bestScore || (score === bestScore && best && r._n.length < best._n.length)) {
+      if (norm >= 0.5) { bestScore = score; best = r; }
+    }
+  }
+  return best;
+}
+
+async function openIngredientsModal() {
+  openModal('modal-ingredients');
+  const body = document.getElementById('ingredients-body');
+  const c = state.customers.find(x => x.id === state.currentCustomerId);
+  document.getElementById('ingredients-modal-title').textContent =
+    '🧺 Shopping List — ' + (c ? c.name : '') ;
+  body.innerHTML = '<div class="ing-loading"><div class="vl-spinner"></div>Building your weekly shopping list…</div>';
+
+  try {
+    await loadRecipeDB();
+  } catch(e) {
+    body.innerHTML = '<div class="ing-loading">Couldn\'t load the recipe database. Please try again.</div>';
+    return;
+  }
+
+  // Gather all planned dishes for the week
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  const dishSet = [];
+  plan.forEach(day => {
+    ['breakfast','lunch','dinner'].forEach(mk => {
+      const d = day[mk].dish;
+      if (!d) return;
+      d.split('\n')[0].split(/\s*\+\s*/).forEach(part => {
+        const clean = part.replace(/\([^)]*\)/g,'').replace(/\d+\s*(cups?|rotis?|pieces?|pcs?)/gi,'').trim();
+        if (clean && clean.length > 1) dishSet.push(clean);
+      });
+    });
+  });
+
+  if (!dishSet.length) {
+    body.innerHTML = '<div class="ing-loading">No meals planned this week. Add some dishes first.</div>';
+    return;
+  }
+
+  // Match each dish and aggregate ingredients
+  const ingMap = new Map(); // normalized ingredient -> {display, qtys:[], count}
+  const matched = [], unmatched = [];
+
+  for (const dish of dishSet) {
+    const r = matchRecipe(dish);
+    if (!r) { unmatched.push(dish); continue; }
+    matched.push(dish);
+    for (const raw of r.i) {
+      // Split quantity from ingredient name
+      const m = raw.match(/^([\d/.\s]*\s*(?:cups?|cup|tablespoons?|tablespoon|tbsp|teaspoons?|teaspoon|tsp|grams?|g|kg|ml|pinch|inch|cloves?|sprigs?)?\s*)?(.+)$/i);
+      let qty = '', name = raw;
+      if (m && m[2]) { qty = (m[1]||'').trim(); name = m[2].trim(); }
+      const key = name.toLowerCase().replace(/s$/,'');
+      if (!key) continue;
+      if (!ingMap.has(key)) ingMap.set(key, { display: name, qtys: [], count: 0 });
+      const e = ingMap.get(key);
+      e.count++;
+      if (qty) e.qtys.push(qty);
+    }
+  }
+
+  // Categorize using the known-ingredient categories if available
+  const groups = {};
+  for (const [key, e] of ingMap) {
+    let cat = 'Other';
+    if (window.ING_CAT) {
+      for (const kk of [key, key+'s', e.display.toLowerCase()]) {
+        if (window.ING_CAT[kk]) { cat = window.ING_CAT[kk]; break; }
+      }
+    }
+    (groups[cat] = groups[cat] || []).push(e);
+  }
+
+  // Render
+  const totalIng = ingMap.size;
+  let html = `<div class="ing-summary">
+    Found <strong>${totalIng}</strong> ingredients across <strong>${matched.length}</strong> matched dishes for the week of ${weekLabel(state.planWeekOffset)}.
+    ${unmatched.length ? `<div class="ing-unmatched">⚠ Couldn't match: ${unmatched.map(esc).join(', ')}</div>` : ''}
+  </div>`;
+
+  lastIngredientList = [];
+  const catOrder = Object.keys(groups).sort();
+  let idx = 0;
+  for (const cat of catOrder) {
+    const items = groups[cat].sort((a,b)=>a.display.localeCompare(b.display));
+    html += `<div class="ing-group"><div class="ing-group-title">${esc(cat)} (${items.length})</div><ul class="ing-list">`;
+    for (const e of items) {
+      const qtyStr = e.count > 1 ? `×${e.count}` : (e.qtys[0] || '');
+      lastIngredientList.push((qtyStr ? qtyStr+' ' : '') + e.display);
+      html += `<li class="ing-item" id="ing-${idx}">
+        <input type="checkbox" onchange="document.getElementById('ing-${idx}').classList.toggle('checked', this.checked)">
+        <span class="ing-name">${esc(e.display)}</span>
+        ${qtyStr ? `<span class="ing-qty">${esc(qtyStr)}</span>` : ''}
+      </li>`;
+      idx++;
+    }
+    html += `</ul></div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+function copyIngredients() {
+  if (!lastIngredientList.length) { toast('Nothing to copy','!'); return; }
+  const text = lastIngredientList.join('\n');
+  navigator.clipboard.writeText(text).then(() => toast('Shopping list copied ✓'));
+}
 
 function openRecipeLinks(event, dayIdx) {
   event.stopPropagation();
