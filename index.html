@@ -1,6 +1,3 @@
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <title>Menu Planner</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -283,12 +280,6 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
 }
 .meal-row-item:hover .meal-edit-btn { opacity: 1; }
 .meal-edit-btn:hover { background: var(--green-lt); color: var(--green); border-color: var(--green); }
-.recipe-dl-btn {
-  padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border);
-  background: var(--surface); cursor: pointer; font-size: 11px; font-weight: 600;
-  color: var(--text-2); transition: all 0.12s; white-space: nowrap;
-}
-.recipe-dl-btn:hover { background: var(--amber-lt); color: var(--amber); border-color: var(--amber); }
 
 /* ─── MODAL ─── */
 .modal-backdrop {
@@ -433,6 +424,107 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
   font-size: 12.5px; color: var(--text-3); margin-bottom: 12px; line-height: 1.5;
 }
 .copy-ok { color: var(--green); font-weight: 600; font-size: 13px; display: none; align-items: center; gap: 4px; }
+
+/* ─── RECIPE / VIDEO MODAL ─── */
+.recipe-modal .modal { width: 720px; }
+.recipe-table { width: 100%; border-collapse: collapse; }
+.recipe-table th {
+  text-align: left; font-size: 11px; font-weight: 700;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 10px 14px; border-bottom: 2px solid var(--border);
+}
+.recipe-table td {
+  padding: 14px; border-bottom: 1px solid var(--border-lt);
+  font-size: 14px; vertical-align: middle;
+}
+.recipe-table tr:last-child td { border-bottom: none; }
+.recipe-table tr:nth-child(even) td { background: var(--green-xl); }
+.recipe-meal-label { font-size: 12px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+.recipe-meal-label.breakfast { color: var(--amber); }
+.recipe-meal-label.lunch { color: var(--green); }
+.recipe-meal-label.dinner { color: #5A3A8C; }
+.recipe-dish-name { color: var(--text); font-weight: 500; }
+
+.yt-play-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0;
+  background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: #333; transition: all 0.15s; white-space: nowrap;
+}
+.yt-play-btn:hover { border-color: #c00; background: #fff5f5; color: #c00; }
+.yt-play-btn .yt-icon {
+  width: 22px; height: 22px; border-radius: 4px; background: #c00;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 11px; flex-shrink: 0;
+}
+
+/* Video player view inside modal */
+.video-player-view { display: none; }
+.video-player-view.active { display: block; }
+.recipe-list-view.hidden { display: none; }
+
+.video-back-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.video-back-btn {
+  display: flex; align-items: center; gap: 5px; padding: 6px 12px;
+  border-radius: var(--r-sm); border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 13px;
+  font-weight: 600; color: var(--text-2); transition: all 0.12s;
+}
+.video-back-btn:hover { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+.video-dish-title {
+  font-size: 16px; font-weight: 700; color: var(--text); flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.video-embed-wrap {
+  position: relative; width: 100%; padding-bottom: 56.25%;
+  border-radius: var(--r); overflow: hidden; background: #0a0a0a;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.video-embed-wrap iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+}
+
+.video-loading {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  background: #111; color: #aaa; font-size: 14px;
+}
+.video-loading .vl-spinner {
+  width: 32px; height: 32px; border: 3px solid #333;
+  border-top-color: #c00; border-radius: 50%;
+  animation: vl-spin 0.8s linear infinite;
+}
+@keyframes vl-spin { to { transform: rotate(360deg); } }
+
+.video-meta-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 14px;
+  padding: 10px 14px; background: var(--green-xl); border-radius: var(--r-sm);
+  font-size: 13px; color: var(--text-2);
+}
+.video-meta-row a {
+  color: var(--green); font-weight: 600; text-decoration: none;
+}
+.video-meta-row a:hover { text-decoration: underline; }
+
+.recipe-footer-hint {
+  font-size: 12px; color: var(--text-3); text-align: center;
+  padding: 12px 22px; border-top: 1px solid var(--border-lt);
+}
+
+/* Day card recipe button */
+.day-card-recipe-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 14px; border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 11px;
+  font-weight: 600; color: var(--text-3); transition: all 0.12s;
+  margin-top: 2px;
+}
+.day-card-recipe-btn:hover {
+  background: #fff5f5; border-color: #c00; color: #c00;
+}
 </style>
 
 <!-- ── SCREEN: HOME ─────────────────────────── -->
@@ -478,8 +570,7 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
         <div class="upload-zone" id="upload-zone"
              ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
           <input type="file" id="file-input" accept=".xlsx,.xls,.csv"
-                 onchange="onFileSelect(event)" onclick="event.stopPropagation()"
-                 ondragover="onDragOver(event)" ondrop="onDrop(event)">
+                 onchange="onFileSelect(event)" onclick="event.stopPropagation()">
           <div class="upload-icon">📤</div>
           <div class="upload-title">Upload Menu Spreadsheet</div>
           <div class="upload-sub">Drag &amp; drop or click to browse</div>
@@ -530,8 +621,6 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
               style="display:none" onclick="openExportModal()">
         ⬇ Download Selected
       </button>
-      <button class="btn btn-outline" onclick="openIngredientsSheet()">🛒 Ingredients</button>
-      <button class="btn btn-outline" onclick="openInventoryModal()">📦 Inventory</button>
       <button class="btn btn-outline" onclick="selectAll()">Select All</button>
       <button class="btn btn-outline" onclick="clearSelection()">Deselect</button>
       <button class="btn btn-outline" onclick="openUploadModal()">✏️ Edit Plan</button>
@@ -678,33 +767,6 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
   </div>
 </div>
 
-<!-- ── MODAL: Recipes ────────────────────── -->
-<div class="modal-backdrop" id="modal-recipes" onclick="closeModalBackdrop(event,'modal-recipes')">
-  <div class="modal" style="width:640px">
-    <div class="modal-header">
-      <div class="modal-title" id="modal-recipes-title">Recipes</div>
-      <button class="modal-close" onclick="closeModal('modal-recipes')">✕</button>
-    </div>
-    <div class="modal-body" style="padding:0">
-      <table id="recipes-table" style="width:100%;border-collapse:collapse;font-size:13.5px">
-        <thead>
-          <tr style="background:var(--green-lt);color:var(--green-dk)">
-            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Meal</th>
-            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Dish</th>
-            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">YouTube</th>
-            <th style="padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600">Rasoi</th>
-          </tr>
-        </thead>
-        <tbody id="recipes-tbody"></tbody>
-      </table>
-    </div>
-    <div class="modal-footer">
-      <div id="recipes-modal-note" style="font-size:12px;color:var(--text-3)">Links open YouTube search filtered to Hindi videos under 6 minutes</div>
-      <button class="btn btn-outline" onclick="closeModal('modal-recipes')">Close</button>
-    </div>
-  </div>
-</div>
-
 <!-- ── MODAL: Template ────────────────────── -->
 <div class="modal-backdrop" id="modal-template" onclick="closeModalBackdrop(event,'modal-template')">
   <div class="modal" style="width:600px">
@@ -733,63 +795,45 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
   </div>
 </div>
 
-<!-- ── MODAL: Inventory ────────────────────── -->
-<div class="modal-backdrop" id="modal-inventory" onclick="closeModalBackdrop(event,'modal-inventory')">
-  <div class="modal" style="width:640px">
+<!-- ── MODAL: Recipe Links / Video Player ──── -->
+<div class="modal-backdrop recipe-modal" id="modal-recipe" onclick="closeModalBackdrop(event,'modal-recipe')">
+  <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">📦 Inventory Uploads</div>
-      <button class="modal-close" onclick="closeModal('modal-inventory')">✕</button>
+      <div class="modal-title" id="recipe-modal-title">Monday — Recipe Links</div>
+      <button class="modal-close" onclick="closeRecipeModal()">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="padding:0">
 
-      <!-- API Key -->
-      <div id="inv-apikey-section" style="margin-bottom:14px;padding:10px 12px;background:var(--amber-lt);border-radius:var(--r-sm);border:1px solid #f0c080">
-        <div style="display:flex;gap:8px;align-items:center">
-          <div style="flex:1">
-            <div class="input-label" style="color:var(--amber)">🔑 Anthropic API Key <span style="font-weight:400;color:var(--text-3)">(for auto-reading images)</span></div>
-            <input type="password" class="input" id="inv-apikey" placeholder="sk-ant-..." style="margin-top:4px">
+      <!-- LIST VIEW: table of dishes with play buttons -->
+      <div class="recipe-list-view" id="recipe-list-view" style="padding:16px 22px">
+        <table class="recipe-table">
+          <thead><tr><th>Meal</th><th>Dish</th><th>Watch</th></tr></thead>
+          <tbody id="recipe-table-body"><!-- JS --></tbody>
+        </table>
+      </div>
+
+      <!-- VIDEO VIEW: embedded YouTube player -->
+      <div class="video-player-view" id="video-player-view" style="padding:16px 22px">
+        <div class="video-back-row">
+          <button class="video-back-btn" onclick="showRecipeList()">← Back</button>
+          <div class="video-dish-title" id="video-dish-title">Poha with chai</div>
+        </div>
+        <div class="video-embed-wrap" id="video-embed-wrap">
+          <div class="video-loading" id="video-loading">
+            <div class="vl-spinner"></div>
+            <span>Finding the best recipe video…</span>
           </div>
-          <button class="btn btn-outline" onclick="saveApiKey()" style="margin-top:18px;white-space:nowrap">Save Key</button>
         </div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:5px">Key is stored only in your browser. Get one at console.anthropic.com</div>
-      </div>
-
-      <div style="display:flex;gap:10px;margin-bottom:14px;align-items:flex-end">
-        <div style="flex:1">
-          <div class="input-label">Date</div>
-          <input type="date" class="input" id="inv-date">
-        </div>
-        <div style="flex:1">
-          <div class="input-label">Type</div>
-          <select class="input" id="inv-type">
-            <option value="check">Inventory Check</option>
-            <option value="analysis">Inventory Analysis</option>
-          </select>
+        <div class="video-meta-row" id="video-meta-row" style="display:none">
+          <span>🎬</span>
+          <span id="video-meta-text">Auto-selected top recipe video</span>
+          <a id="video-yt-link" href="#" target="_blank" rel="noopener">Open on YouTube ↗</a>
         </div>
       </div>
 
-      <div id="inv-drop-zone" style="border:2px dashed var(--border);border-radius:var(--r-sm);padding:24px;text-align:center;cursor:pointer;transition:border-color 0.15s;margin-bottom:12px">
-        <div style="font-size:26px;margin-bottom:4px">📷</div>
-        <div style="font-weight:700;font-size:14px">Upload Inventory Images</div>
-        <div style="font-size:12px;color:var(--text-3)">Drag & drop or click to browse · AI will auto-read item names &amp; quantities</div>
-        <input type="file" id="inv-file-input" accept="image/*" multiple style="display:none">
-      </div>
-      <div id="inv-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
-
-      <div id="inv-analyze-bar" style="display:none;margin-bottom:10px">
-        <button class="btn btn-green" onclick="analyzeInventoryImages()" id="inv-analyze-btn" style="width:100%">🤖 Read Images with AI</button>
-        <div id="inv-analyze-status" style="font-size:12px;color:var(--text-3);margin-top:5px;text-align:center"></div>
-      </div>
-
-      <div style="margin-bottom:12px">
-        <div class="input-label">Extracted Item Notes <span style="font-weight:400;color:var(--text-3)">(auto-filled from images · edit freely)</span></div>
-        <textarea id="inv-notes" class="input" rows="7" placeholder="Upload images above and click 'Read Images with AI'&#10;&#10;Or type manually:&#10;tomato: low stock&#10;paneer: 340g left&#10;onion: available"></textarea>
-      </div>
-
-      <button class="btn btn-green" id="inv-save-btn" onclick="saveInventoryUpload()" style="width:100%">Save Upload</button>
-      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
-      <div style="font-weight:700;font-size:14px;margin-bottom:10px">Upload History</div>
-      <div id="inv-history" style="font-size:13px;color:var(--text-3)">No uploads yet</div>
+    </div>
+    <div class="recipe-footer-hint" id="recipe-footer-hint">
+      ▶ Click a dish to watch the top recipe video
     </div>
   </div>
 </div>
@@ -801,14 +845,6 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const DAYS_OF_WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-let CSV_RECIPE_DB = null;
-(function loadCSVRecipes(){
-  fetch('recipes.json').then(r=>r.json()).then(d=>{CSV_RECIPE_DB=d;}).catch(()=>{});
-})();
-
-let AI_INGREDIENT_CACHE = {};
-try { AI_INGREDIENT_CACHE = JSON.parse(localStorage.getItem('ai_ingredient_cache') || '{}'); } catch(e) {}
 
 let state = {
   customers: [
@@ -967,12 +1003,6 @@ function goToPlan() {
   state.currentCustomerId = state.selectedHouseId;
   state.planWeekOffset = state.homeWeekOffset;
   state.selectedDays = new Set();
-
-  if (state.pendingImportData) {
-    applyPlanData(state.currentCustomerId, state.planWeekOffset, state.pendingImportData);
-    state.pendingImportData = null;
-  }
-
   showScreen('screen-plan');
   renderPlanHeader();
   renderDayGrid();
@@ -1031,17 +1061,15 @@ function renderDayGrid() {
   grid.innerHTML = plan.map((day, i) => {
     const sel = state.selectedDays.has(i);
     const dt = dates[i];
-    const hasDishes = day.breakfast.dish || day.lunch.dish || day.dinner.dish;
     return `<div class="day-card ${sel?'selected':''}" onclick="toggleDaySelect(${i})">
       <div class="day-card-header">
         <div>
           <div class="day-card-name">${DAYS_OF_WEEK[i]}</div>
           <div class="day-card-date">${MONTHS[dt.getMonth()]} ${dt.getDate()}</div>
+          ${(day.breakfast.dish||day.lunch.dish||day.dinner.dish) ?
+            `<button class="day-card-recipe-btn" onclick="openRecipeLinks(event,${i})" title="Watch recipe videos">▶ Recipes</button>` : ''}
         </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          ${hasDishes ? `<button class="recipe-dl-btn" onclick="downloadDayRecipes(event,${i})" title="Open recipe links in Google Sheets">📋 Recipes</button>` : ''}
-          <div class="day-check">${sel?'✓':''}</div>
-        </div>
+        <div class="day-check">${sel?'✓':''}</div>
       </div>
       ${['breakfast','lunch','dinner'].map(m => `
         <div class="meal-row-item">
@@ -1218,14 +1246,9 @@ function applyPlanData(customerId, weekOffset, data) {
     breakfast:{dish:'',servings:2}, lunch:{dish:'',servings:2}, dinner:{dish:'',servings:3}
   }));
   for (const row of data) {
-    const dayLower = row.day.toLowerCase().trim();
-    let di = DAYS_OF_WEEK.map(d=>d.toLowerCase()).indexOf(dayLower);
-    if (di < 0) di = DAYS_OF_WEEK.findIndex(d => d.toLowerCase().startsWith(dayLower.slice(0,3)));
+    const di = DAYS_OF_WEEK.map(d=>d.toLowerCase()).indexOf(row.day.toLowerCase());
     if (di < 0) continue;
-    let mealKey = row.meal.toLowerCase().trim();
-    if (mealKey.startsWith('b')) mealKey = 'breakfast';
-    else if (mealKey.startsWith('l')) mealKey = 'lunch';
-    else if (mealKey.startsWith('d') || mealKey.startsWith('s')) mealKey = 'dinner';
+    const mealKey = row.meal.toLowerCase();
     if (!['breakfast','lunch','dinner'].includes(mealKey)) continue;
     const existing = week[di][mealKey];
     const dish = existing.dish ? existing.dish + '\n' + row.dish : row.dish;
@@ -1236,7 +1259,7 @@ function applyPlanData(customerId, weekOffset, data) {
 }
 
 function countMeals(data) { return data.filter(r=>r.dish).length; }
-function countDays(data) { return new Set(data.map(r=>r.day.toLowerCase().trim())).size; }
+function countDays(data) { return new Set(data.map(r=>r.day.toLowerCase())).size; }
 
 // ─── FILE PARSING ─────────────────────────────────────────────────────────────
 async function parseFile(file) {
@@ -1252,7 +1275,6 @@ async function parseFile(file) {
 }
 
 function parseCSV(text) {
-  text = text.replace(/^﻿/, '');
   const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
   if (lines.length < 2) throw new Error('File appears empty');
   // Parse header
@@ -1332,26 +1354,20 @@ async function parseXLSX(buffer) {
 
   // Parse cells
   const rows = {};
-  const cellRegex = /<c r="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>([^]*?)<\/c>)/g;
+  const cellRegex = /<c r="([A-Z]+)(\d+)"[^>]*(?:t="([^"]*)")?[^>]*>(?:<v>([^<]*)<\/v>)?/g;
   let m;
   while ((m = cellRegex.exec(sheetXml)) !== null) {
     const col = colToIdx(m[1]);
     const row = parseInt(m[2]) - 1;
-    const attrs = m[3] || '';
-    const inner = m[4] || '';
-    const typeMatch = attrs.match(/t="([^"]*)"/);
-    const type = typeMatch ? typeMatch[1] : '';
+    const type = m[3];
+    const raw = m[4]||'';
     let val = '';
-    if (type === 's') {
-      const vMatch = inner.match(/<v>([^<]*)<\/v>/);
-      val = vMatch ? (sharedStrings[parseInt(vMatch[1])]||'') : '';
-    } else if (type === 'inlineStr') {
-      const isMatch = inner.match(/<is><t[^>]*>([^<]*)<\/t>/);
-      val = isMatch ? decodeXML(isMatch[1]) : '';
-    } else {
-      const vMatch = inner.match(/<v>([^<]*)<\/v>/);
-      val = vMatch ? vMatch[1] : '';
+    if (type === 's') val = sharedStrings[parseInt(raw)]||'';
+    else if (type === 'inlineStr') {
+      const inlineMatch = sheetXml.slice(m.index).match(/<is><t[^>]*>([^<]*)<\/t>/);
+      val = inlineMatch ? decodeXML(inlineMatch[1]) : raw;
     }
+    else val = raw;
     if (!rows[row]) rows[row]={};
     rows[row][col] = val;
   }
@@ -1798,6 +1814,25 @@ function showCopyOk() {
   setTimeout(() => { el.style.display = 'none'; }, 2500);
 }
 
+// ─── GOTO PLAN (from home) ────────────────────────────────────────────────────
+const _origGoToPlan = goToPlan;
+// Override to also apply imported data
+window.goToPlan = function() {
+  if (!state.selectedHouseId) return;
+  state.currentCustomerId = state.selectedHouseId;
+  state.planWeekOffset = state.homeWeekOffset;
+  state.selectedDays = new Set();
+
+  // Apply pending imported data if any
+  if (state.pendingImportData) {
+    applyPlanData(state.currentCustomerId, state.planWeekOffset, state.pendingImportData);
+    state.pendingImportData = null;
+  }
+
+  showScreen('screen-plan');
+  renderPlanHeader();
+  renderDayGrid();
+};
 
 // ─── MODAL HELPERS ────────────────────────────────────────────────────────────
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1816,950 +1851,258 @@ function toast(msg, type) {
   setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),250); }, 2600);
 }
 
-// ─── RECIPE LINKS ─────────────────────────────────────────────────────────────
-function buildYoutubeSearchUrl(dish) {
-  return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(dish.trim() + ' recipe hindi') + '&sp=EgIYAQ%3D%3D';
-}
-
-
-function splitDishes(dishStr) {
-  if (!dishStr || dishStr.trim() === '' || dishStr.trim().toLowerCase() === 'no meal set') return [];
-  return dishStr.split('+').map(d => d.trim()).filter(d => d.length > 0);
-}
-
-function crc32(data) {
-  let table = [];
-  for (let i = 0; i < 256; i++) {
-    let c = i;
-    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-    table.push(c);
-  }
-  let crc = 0xFFFFFFFF;
-  for (let i = 0; i < data.length; i++) crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xFF];
-  return (crc ^ 0xFFFFFFFF) >>> 0;
-}
-
-function strToBytes(s) {
-  return new TextEncoder().encode(s);
-}
-
-function buildZipUncompressed(files) {
-  // files: [{name, data: Uint8Array}]
-  const enc = s => strToBytes(s);
-  const u16le = n => [n & 0xFF, (n >> 8) & 0xFF];
-  const u32le = n => [n & 0xFF, (n >> 8) & 0xFF, (n >> 16) & 0xFF, (n >> 24) & 0xFF];
-
-  const localHeaders = [];
-  const centralDirs = [];
-  let offset = 0;
-
-  for (const f of files) {
-    const nameBytes = enc(f.name);
-    const crc = crc32(f.data);
-    const size = f.data.length;
-
-    const local = new Uint8Array([
-      0x50,0x4B,0x03,0x04,   // sig
-      20,0,                   // version needed
-      0,0,                    // flags
-      0,0,                    // compression: stored
-      0,0,0,0,               // mod time/date
-      ...u32le(crc),
-      ...u32le(size),
-      ...u32le(size),
-      ...u16le(nameBytes.length),
-      0,0,                   // extra length
-      ...nameBytes,
-      ...f.data
-    ]);
-
-    const central = new Uint8Array([
-      0x50,0x4B,0x01,0x02,   // sig
-      20,0,                   // version made
-      20,0,                   // version needed
-      0,0,                    // flags
-      0,0,                    // compression: stored
-      0,0,0,0,               // mod time/date
-      ...u32le(crc),
-      ...u32le(size),
-      ...u32le(size),
-      ...u16le(nameBytes.length),
-      0,0,                   // extra
-      0,0,                   // comment
-      0,0,                   // disk start
-      0,0,                   // int attrs
-      0,0,0,0,               // ext attrs
-      ...u32le(offset),
-      ...nameBytes
-    ]);
-
-    localHeaders.push(local);
-    centralDirs.push(central);
-    offset += local.length;
-  }
-
-  const centralStart = offset;
-  const centralSize = centralDirs.reduce((s, b) => s + b.length, 0);
-  const eocd = new Uint8Array([
-    0x50,0x4B,0x05,0x06,
-    0,0, 0,0,
-    ...u16le(files.length),
-    ...u16le(files.length),
-    ...u32le(centralSize),
-    ...u32le(centralStart),
-    0,0
-  ]);
-
-  const parts = [...localHeaders, ...centralDirs, eocd];
-  const total = parts.reduce((s, b) => s + b.length, 0);
-  const out = new Uint8Array(total);
-  let pos = 0;
-  for (const p of parts) { out.set(p, pos); pos += p.length; }
-  return out;
-}
-
-function buildRecipeXLSX(dayName, meals) {
-  // meals: [{meal, dish}]
-  const xmlEsc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-  const rows = meals.filter(m => m.dish).map((m, ri) => {
-    const rowNum = ri + 2;
-    const ytUrl = buildYoutubeUrl(m.dish);
-    const formula = `=HYPERLINK(&quot;${xmlEsc(ytUrl)}&quot;,&quot;▶ Watch Recipe&quot;)`;
-    return `<row r="${rowNum}">
-      <c r="A${rowNum}" t="inlineStr"><is><t>${xmlEsc(dayName)}</t></is></c>
-      <c r="B${rowNum}" t="inlineStr"><is><t>${xmlEsc(m.meal)}</t></is></c>
-      <c r="C${rowNum}" t="inlineStr"><is><t>${xmlEsc(m.dish)}</t></is></c>
-      <c r="D${rowNum}" t="str"><f>${formula}</f><v>▶ Watch Recipe</v></c>
-    </row>`;
-  }).join('');
-
-  const ws = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <sheetData>
-    <row r="1">
-      <c r="A1" t="inlineStr"><is><t>Day</t></is></c>
-      <c r="B1" t="inlineStr"><is><t>Meal</t></is></c>
-      <c r="C1" t="inlineStr"><is><t>Dish</t></is></c>
-      <c r="D1" t="inlineStr"><is><t>YouTube Recipe (Hindi, &lt;6 min)</t></is></c>
-    </row>
-    ${rows}
-  </sheetData>
-  <cols>
-    <col min="1" max="1" width="12" customWidth="1"/>
-    <col min="2" max="2" width="14" customWidth="1"/>
-    <col min="3" max="3" width="30" customWidth="1"/>
-    <col min="4" max="4" width="30" customWidth="1"/>
-  </cols>
-</worksheet>`;
-
-  const wb = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets><sheet name="Recipes" sheetId="1" r:id="rId1"/></sheets>
-</workbook>`;
-
-  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-</Relationships>`;
-
-  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-</Types>`;
-
-  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-</Relationships>`;
-
-  const enc = s => strToBytes(s);
-  return buildZipUncompressed([
-    {name: '[Content_Types].xml', data: enc(ct)},
-    {name: '_rels/.rels', data: enc(rootRels)},
-    {name: 'xl/workbook.xml', data: enc(wb)},
-    {name: 'xl/_rels/workbook.xml.rels', data: enc(wbRels)},
-    {name: 'xl/worksheets/sheet1.xml', data: enc(ws)},
-  ]);
-}
-
-function downloadDayRecipes(event, dayIdx) {
-  event.stopPropagation();
-  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
-  const day = plan[dayIdx];
-  const dayName = DAYS_OF_WEEK[dayIdx];
-  const mealColors = {Breakfast:'var(--amber)',Lunch:'var(--green)',Dinner:'#7C5CBF'};
-
-  const entries = [];
-  for (const [mealName, mealObj] of [['Breakfast', day.breakfast], ['Lunch', day.lunch], ['Dinner', day.dinner]]) {
-    for (const dish of splitDishes(mealObj.dish)) entries.push({meal: mealName, dish});
-  }
-
-  if (!entries.length) { toast('No dishes for this day', '!'); return; }
-
-  document.getElementById('modal-recipes-title').textContent = dayName + ' — Recipe Links';
-  document.getElementById('recipes-modal-note').textContent = 'YouTube: Hindi videos under 6 min · Rasoi: recipe-voice-finder';
-  const tbody = document.getElementById('recipes-tbody');
-  tbody.innerHTML = entries.map((e, i) => `
-    <tr data-idx="${i}" style="border-bottom:1px solid var(--border)">
-      <td style="padding:10px 14px;font-weight:600;color:${mealColors[e.meal]||'var(--text)'};white-space:nowrap">${e.meal}</td>
-      <td style="padding:10px 14px;color:var(--text)">${e.dish}</td>
-      <td style="padding:10px 14px">
-        <a href="${buildYoutubeSearchUrl(e.dish)}" target="_blank" rel="noopener"
-           style="color:var(--green);font-weight:600;text-decoration:none">▶ YouTube</a>
-      </td>
-      <td style="padding:10px 14px">
-        <a href="#" class="rasoi-link" data-idx="${i}"
-           style="color:var(--amber);font-weight:600;text-decoration:none;cursor:pointer">🍳 Rasoi</a>
-      </td>
-    </tr>`).join('');
-  tbody.querySelectorAll('.rasoi-link').forEach(a => {
-    const dish = entries[+a.dataset.idx].dish;
-    a.addEventListener('click', function(ev) {
-      ev.preventDefault();
-      const clean = dish.trim().replace(/\s*\(.*?\)\s*/g,'').replace(/\d+\s*/g,'').trim();
-      navigator.clipboard.writeText(clean).catch(()=>{});
-      window.open('https://recipe-voice-finder.emergent.host/', '_blank');
-      toast('"' + clean + '" copied — paste it in the Rasoi search box');
-    });
-  });
-  openModal('modal-recipes');
-}
-
-// ─── INGREDIENTS SHEET ────────────────────────────────────────────────────────
-// ─── INVENTORY ───────────────────────────────────────────────────────────────
-let pendingInvFiles = [];
-
-function saveApiKey() {
-  const key = document.getElementById('inv-apikey').value.trim();
-  if (!key.startsWith('sk-ant-')) { toast('Key should start with sk-ant-', '!'); return; }
-  localStorage.setItem('anthropic_api_key', key);
-  document.getElementById('inv-apikey-section').style.display = 'none';
-  toast('API key saved ✓');
-}
-
-function openInventoryModal() {
-  pendingInvFiles = [];
-  document.getElementById('inv-preview').innerHTML = '';
-  document.getElementById('inv-notes').value = '';
-  document.getElementById('inv-analyze-bar').style.display = 'none';
-  document.getElementById('inv-analyze-status').textContent = '';
-  const today = new Date();
-  document.getElementById('inv-date').value = today.toISOString().split('T')[0];
-  document.getElementById('inv-type').value = 'check';
-  // Show/hide API key section
-  const storedKey = localStorage.getItem('anthropic_api_key') || '';
-  const keySection = document.getElementById('inv-apikey-section');
-  if (storedKey) {
-    keySection.style.display = 'none';
-  } else {
-    keySection.style.display = 'block';
-    document.getElementById('inv-apikey').value = '';
-  }
-  renderInventoryHistory();
-  openModal('modal-inventory');
-}
-
-async function analyzeInventoryImages() {
-  const apiKey = localStorage.getItem('anthropic_api_key');
-  if (!apiKey) { toast('Save your API key first', '!'); document.getElementById('inv-apikey-section').style.display = 'block'; return; }
-  if (!pendingInvFiles.length) { toast('Upload images first', '!'); return; }
-
-  const btn = document.getElementById('inv-analyze-btn');
-  const status = document.getElementById('inv-analyze-status');
-  btn.disabled = true; btn.textContent = '⏳ Reading images…';
-  status.textContent = 'Sending ' + pendingInvFiles.length + ' image(s) to AI…';
-
-  const imageContents = pendingInvFiles.map(f => {
-    const b64 = f.data.split(',')[1];
-    const mime = f.data.split(';')[0].split(':')[1] || 'image/jpeg';
-    return { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } };
-  });
-
-  const prompt = `You are reading inventory check / analysis images from a household grocery & meal planning system.
-Extract every food item you can see with its current stock level, quantity, or status.
-Output ONLY a plain list, one item per line, in this exact format:
-item name: status or quantity
-
-Rules:
-- Use simple lowercase ingredient names (e.g. "tomato", "paneer", "onion")
-- For quantities include the number and unit (e.g. "340g left", "3 pcs", "2 boxes")
-- For status use phrases like: available, low stock, finished, out of stock, verify needed
-- Include ALL items visible — produce, dairy, protein, pantry
-- No blank lines, no headers, no extra text — ONLY the list`;
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-ipc': 'true',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-6',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: [...imageContents, { type: 'text', text: prompt }] }]
-      })
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error?.message || 'API error ' + resp.status);
-    }
-
-    const data = await resp.json();
-    const text = data.content?.[0]?.text || '';
-    const existing = document.getElementById('inv-notes').value.trim();
-    document.getElementById('inv-notes').value = existing ? existing + '\n' + text : text;
-    status.textContent = '✓ Done — review and edit the notes below, then save';
-    btn.textContent = '🤖 Re-read Images';
-  } catch(e) {
-    status.textContent = '✗ ' + e.message;
-    toast('AI read failed: ' + e.message, '!');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-(function initInvDrop() {
-  document.addEventListener('DOMContentLoaded', () => {
-    const zone = document.getElementById('inv-drop-zone');
-    const fileInput = document.getElementById('inv-file-input');
-    if (!zone || !fileInput) return;
-    zone.addEventListener('click', () => fileInput.click());
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--green)'; });
-    zone.addEventListener('dragleave', () => { zone.style.borderColor = 'var(--border)'; });
-    zone.addEventListener('drop', e => {
-      e.preventDefault(); zone.style.borderColor = 'var(--border)';
-      handleInvFiles(e.dataTransfer.files);
-    });
-    fileInput.addEventListener('change', () => { handleInvFiles(fileInput.files); fileInput.value = ''; });
-  });
-})();
-
-function handleInvFiles(files) {
-  Array.from(files).forEach(f => {
-    if (!f.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      pendingInvFiles.push({ name: f.name, data: e.target.result });
-      renderInvPreviews();
-    };
-    reader.readAsDataURL(f);
-  });
-}
-
-function renderInvPreviews() {
-  const el = document.getElementById('inv-preview');
-  el.innerHTML = pendingInvFiles.map((f, i) => `
-    <div style="position:relative;width:80px;height:80px;border-radius:6px;overflow:hidden;border:1px solid var(--border)">
-      <img src="${f.data}" style="width:100%;height:100%;object-fit:cover">
-      <button onclick="removeInvFile(${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-    </div>`).join('');
-  document.getElementById('inv-analyze-bar').style.display = pendingInvFiles.length ? 'block' : 'none';
-}
-
-function removeInvFile(idx) {
-  pendingInvFiles.splice(idx, 1);
-  renderInvPreviews();
-  if (!pendingInvFiles.length) document.getElementById('inv-analyze-status').textContent = '';
-}
-
-function saveInventoryUpload() {
-  const date = document.getElementById('inv-date').value;
-  const type = document.getElementById('inv-type').value;
-  const notes = document.getElementById('inv-notes').value.trim();
-  if (!date) { toast('Select a date', '!'); return; }
-  if (!pendingInvFiles.length && !notes) { toast('Add images or item notes', '!'); return; }
-  const key = 'inventory_' + state.currentCustomerId;
-  let uploads = [];
-  try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  uploads.unshift({
-    id: 'inv' + Date.now(),
-    date,
-    type,
-    notes,
-    images: pendingInvFiles.map(f => f.data),
-    imageNames: pendingInvFiles.map(f => f.name),
-    createdAt: new Date().toISOString()
-  });
-  try {
-    localStorage.setItem(key, JSON.stringify(uploads));
-  } catch(e) {
-    toast('Storage full — try fewer or smaller images', '!');
-    return;
-  }
-  pendingInvFiles = [];
-  document.getElementById('inv-preview').innerHTML = '';
-  document.getElementById('inv-notes').value = '';
-  renderInventoryHistory();
-  toast('Inventory upload saved ✓');
-}
-
-function renderInventoryHistory() {
-  const key = 'inventory_' + state.currentCustomerId;
-  let uploads = [];
-  try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  const el = document.getElementById('inv-history');
-  if (!uploads.length) { el.innerHTML = '<div style="color:var(--text-3)">No uploads yet</div>'; return; }
-  el.innerHTML = uploads.map(u => {
-    const typeLabel = u.type === 'analysis' ? '📊 Analysis' : '📋 Check';
-    const d = new Date(u.date + 'T00:00:00');
-    const dateStr = d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
-    return `
-    <div style="border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div>
-          <span style="font-weight:700;color:var(--text)">${dateStr}</span>
-          <span style="margin-left:8px;font-size:12px;padding:2px 8px;border-radius:10px;background:${u.type==='analysis'?'var(--amber-lt)':'var(--green-lt)'};color:${u.type==='analysis'?'var(--amber)':'var(--green)'};font-weight:600">${typeLabel}</span>
-        </div>
-        <button onclick="deleteInventoryUpload('${u.id}')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:12px;font-weight:600">Delete</button>
-      </div>
-      ${u.notes ? `<div style="font-size:12px;color:var(--text-2);background:var(--bg);border-radius:4px;padding:7px 9px;margin-bottom:8px;white-space:pre-line">${u.notes.replace(/</g,'&lt;')}</div>` : ''}
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${u.images.map((img, i) => `
-          <a href="${img}" target="_blank" style="display:block;width:64px;height:64px;border-radius:4px;overflow:hidden;border:1px solid var(--border)">
-            <img src="${img}" style="width:100%;height:100%;object-fit:cover" title="${u.imageNames?.[i]||'image'}">
-          </a>`).join('')}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function deleteInventoryUpload(id) {
-  const key = 'inventory_' + state.currentCustomerId;
-  let uploads = [];
-  try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  uploads = uploads.filter(u => u.id !== id);
-  localStorage.setItem(key, JSON.stringify(uploads));
-  renderInventoryHistory();
-  toast('Upload deleted');
-}
-
-function collectTBDDishes(plan) {
-  const tbdSet = new Set();
-  for (const day of plan) {
-    for (const m of ['breakfast','lunch','dinner']) {
-      const dishes = splitDishes(day[m].dish);
-      for (const d of dishes) {
-        const ings = getIngredientsForDish(d);
-        if (ings.length === 1 && ings[0].endsWith('(ingredients TBD)')) {
-          tbdSet.add(d.trim());
-        }
-      }
-    }
-  }
-  return [...tbdSet];
-}
-
-async function resolveUnknownIngredients(tbdDishes) {
-  const apiKey = localStorage.getItem('anthropic_api_key');
-  if (!apiKey) return false;
-  if (!tbdDishes.length) return true;
-
-  const prompt = `For each dish below, list its main cooking ingredients (not pantry staples like salt, oil, water, sugar). Return ONLY a JSON object mapping each dish name (exactly as given) to an array of ingredient strings. No explanation.
-
-Dishes:
-${tbdDishes.map(d => '- ' + d).join('\n')}`;
-
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-ipc': 'true',
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-
-  if (!resp.ok) throw new Error('API error ' + resp.status);
-  const data = await resp.json();
-  const text = data.content?.[0]?.text || '';
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return false;
-
-  const result = JSON.parse(jsonMatch[0]);
-  for (const [dish, ings] of Object.entries(result)) {
-    if (Array.isArray(ings)) {
-      const norm = dish.trim().toLowerCase().replace(/\s*\(.*?\)\s*/g, '').replace(/\d+\s*/g, '').trim();
-      AI_INGREDIENT_CACHE[norm] = ings.map(i => i.toLowerCase().trim());
-    }
-  }
-  localStorage.setItem('ai_ingredient_cache', JSON.stringify(AI_INGREDIENT_CACHE));
-  return true;
-}
-
-async function openIngredientsSheet() {
-  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
-  const dates = weekDates(state.planWeekOffset);
-  const c = state.customers.find(x => x.id === state.currentCustomerId);
-
-  const tbdDishes = collectTBDDishes(plan);
-  if (tbdDishes.length > 0) {
-    const apiKey = localStorage.getItem('anthropic_api_key');
-    if (apiKey) {
-      toast('Looking up ' + tbdDishes.length + ' unknown dish' + (tbdDishes.length > 1 ? 'es' : '') + ' with AI…');
-      try {
-        await resolveUnknownIngredients(tbdDishes);
-        toast('AI found ingredients for ' + tbdDishes.length + ' dish' + (tbdDishes.length > 1 ? 'es' : '') + ' ✓');
-      } catch(e) {
-        toast('AI lookup failed: ' + e.message + ' — exporting with TBD', '!');
-      }
-    }
-  }
-
-  try {
-    const bytes = buildIngredientsXLSX(plan, dates, c);
-    const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (c ? c.name.toLowerCase().replace(/\s+/g,'_') : 'menu') + '_ingredients.xlsx';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast('Ingredients sheet downloaded ✓');
-  } catch(e) { toast('Failed: ' + e.message, '!'); }
-}
-
-const INGREDIENT_DB = {
-  'poha': ['Flattened rice (poha)','Onion','Green chillies','Curry leaves','Mustard seeds','Turmeric powder','Peanuts','Lemon','Salt','Oil','Coriander leaves'],
-  'chai': ['Tea leaves','Milk','Sugar','Ginger','Cardamom','Water'],
-  'dal tadka': ['Toor dal','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Mustard seeds','Ghee','Turmeric powder','Red chilli powder','Salt','Coriander leaves','Hing (asafoetida)'],
-  'jeera rice': ['Basmati rice','Cumin seeds (jeera)','Ghee','Bay leaf','Salt','Water'],
-  'chole masala': ['Kabuli chana (chickpeas)','Onion','Tomato','Ginger','Garlic','Green chillies','Chole masala powder','Cumin seeds','Bay leaf','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Amchur (dry mango powder)','Oil','Salt','Coriander leaves'],
-  'rotis': ['Whole wheat flour (atta)','Water','Salt','Ghee'],
-  'roti': ['Whole wheat flour (atta)','Water','Salt','Ghee'],
-  'paneer butter masala': ['Paneer','Butter','Cream','Tomato','Onion','Cashews','Ginger','Garlic','Kashmiri red chilli powder','Garam masala','Turmeric powder','Sugar','Salt','Kasuri methi','Oil'],
-  'salad': ['Cucumber','Tomato','Onion','Carrot','Lemon','Salt','Black pepper','Chaat masala'],
-  'peri peri paneer wraps': ['Paneer','Tortilla/roti wraps','Capsicum','Onion','Peri peri spice mix','Yogurt','Garlic','Lemon juice','Oil','Salt','Lettuce','Mayonnaise'],
-  'palak paneer': ['Paneer','Spinach (palak)','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Garam masala','Cream','Salt','Oil'],
-  'dal': ['Toor dal','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Mustard seeds','Ghee','Turmeric powder','Red chilli powder','Salt','Coriander leaves'],
-  'bhindi masala': ['Bhindi (okra)','Onion','Tomato','Green chillies','Turmeric powder','Red chilli powder','Coriander powder','Amchur powder','Cumin seeds','Oil','Salt','Coriander leaves'],
-  'masala rice bowl': ['Basmati rice','Mixed vegetables','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Ghee','Salt','Coriander leaves','Lemon'],
-  'masala rice': ['Basmati rice','Mixed vegetables','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Ghee','Salt','Coriander leaves'],
-  'capsicum paneer sabzi': ['Paneer','Capsicum','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'mixed dal': ['Toor dal','Moong dal','Masoor dal','Chana dal','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Mustard seeds','Ghee','Turmeric powder','Red chilli powder','Salt','Coriander leaves'],
-  'rice': ['Basmati rice','Water','Salt','Ghee'],
-  'boondi raita': ['Boondi','Yogurt (curd)','Cumin powder','Red chilli powder','Salt','Coriander leaves'],
-  'raita': ['Yogurt (curd)','Cucumber','Cumin powder','Salt','Coriander leaves'],
-  'paratha': ['Whole wheat flour (atta)','Ghee','Salt','Water'],
-  'aloo paratha': ['Whole wheat flour (atta)','Potato','Green chillies','Coriander leaves','Cumin powder','Salt','Ghee','Water'],
-  'egg curry': ['Eggs','Onion','Tomato','Ginger','Garlic','Green chillies','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'rajma': ['Rajma (kidney beans)','Onion','Tomato','Ginger','Garlic','Cumin seeds','Bay leaf','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'aloo gobi': ['Potato','Cauliflower','Onion','Tomato','Ginger','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'paneer tikka': ['Paneer','Yogurt','Capsicum','Onion','Ginger-garlic paste','Kashmiri red chilli powder','Garam masala','Lemon juice','Oil','Salt','Chaat masala'],
-  'biryani': ['Basmati rice','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Milk','Ghee','Oil','Salt','Biryani masala'],
-  'chicken biryani': ['Chicken','Basmati rice','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Milk','Ghee','Oil','Salt','Biryani masala'],
-  'dosa': ['Dosa batter (rice + urad dal)','Oil','Ghee'],
-  'idli': ['Idli batter (rice + urad dal)','Salt'],
-  'upma': ['Rava (semolina)','Onion','Green chillies','Curry leaves','Mustard seeds','Urad dal','Chana dal','Ginger','Oil','Salt','Water','Coriander leaves','Cashews'],
-  'khichdi': ['Rice','Moong dal','Turmeric powder','Ghee','Cumin seeds','Salt','Water'],
-  'sambar': ['Toor dal','Mixed vegetables','Tamarind','Sambar powder','Turmeric powder','Mustard seeds','Curry leaves','Hing','Oil','Salt','Onion','Tomato'],
-  'uttapam': ['Dosa batter','Onion','Tomato','Capsicum','Green chillies','Coriander leaves','Oil'],
-  'pav bhaji': ['Pav buns','Potato','Cauliflower','Capsicum','Onion','Tomato','Green peas','Pav bhaji masala','Butter','Ginger','Garlic','Red chilli powder','Salt','Lemon','Coriander leaves'],
-  'naan': ['Maida (all-purpose flour)','Yogurt','Sugar','Baking soda','Salt','Ghee','Water'],
-  'paneer bhurji': ['Paneer','Onion','Tomato','Capsicum','Green chillies','Ginger','Turmeric powder','Red chilli powder','Cumin seeds','Oil','Salt','Coriander leaves'],
-  'aloo matar': ['Potato','Green peas','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'chana masala': ['Kabuli chana','Onion','Tomato','Ginger','Garlic','Green chillies','Chana masala powder','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Amchur','Oil','Salt','Coriander leaves'],
-  'pulao': ['Basmati rice','Mixed vegetables','Onion','Ghee','Bay leaf','Cinnamon','Cardamom','Cloves','Cumin seeds','Salt','Water'],
-  'kadhi': ['Besan (gram flour)','Yogurt (curd)','Onion','Green chillies','Curry leaves','Mustard seeds','Cumin seeds','Turmeric powder','Red chilli powder','Hing','Ghee','Salt'],
-  'matar paneer': ['Paneer','Green peas','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Cream','Oil','Salt','Coriander leaves','Kasuri methi'],
-  'dal makhani': ['Urad dal (whole black)','Rajma','Butter','Cream','Onion','Tomato','Ginger','Garlic','Red chilli powder','Garam masala','Kasuri methi','Salt'],
-  'mix veg': ['Potato','Cauliflower','Carrot','Green peas','Beans','Capsicum','Onion','Tomato','Ginger','Garlic','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'chhole': ['Kabuli chana (chickpeas)','Onion','Tomato','Ginger','Garlic','Green chillies','Chole masala powder','Cumin seeds','Bay leaf','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Amchur','Oil','Salt','Coriander leaves'],
-  'aab gosht': ['Mutton','Milk','Onion','Yogurt','Fennel powder','Ginger','Cardamom','Cinnamon','Cloves','Bay leaf','Saffron','Ghee','Salt','Black pepper'],
-  'chicken kashmiri': ['Chicken','Yogurt','Onion','Tomato','Ginger','Garlic','Kashmiri red chilli powder','Fennel powder','Cardamom','Cinnamon','Cloves','Bay leaf','Cream','Oil','Salt','Coriander leaves'],
-  'mutton rogan josh': ['Mutton','Yogurt','Onion','Ginger','Garlic','Kashmiri red chilli powder','Fennel powder','Cardamom','Cinnamon','Cloves','Bay leaf','Oil','Salt','Coriander leaves'],
-  'rogan josh': ['Mutton','Yogurt','Onion','Ginger','Garlic','Kashmiri red chilli powder','Fennel powder','Cardamom','Cinnamon','Cloves','Bay leaf','Oil','Salt','Coriander leaves'],
-  'butter chicken': ['Chicken','Butter','Cream','Tomato','Onion','Cashews','Ginger','Garlic','Kashmiri red chilli powder','Garam masala','Turmeric powder','Sugar','Salt','Kasuri methi','Oil'],
-  'chicken curry': ['Chicken','Onion','Tomato','Ginger','Garlic','Green chillies','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'chicken tikka masala': ['Chicken','Yogurt','Onion','Tomato','Ginger','Garlic','Cream','Kashmiri red chilli powder','Garam masala','Cumin seeds','Oil','Salt','Coriander leaves','Kasuri methi','Butter'],
-  'chicken tikka': ['Chicken','Yogurt','Ginger-garlic paste','Kashmiri red chilli powder','Garam masala','Lemon juice','Oil','Salt','Chaat masala'],
-  'tandoori chicken': ['Chicken','Yogurt','Ginger-garlic paste','Kashmiri red chilli powder','Garam masala','Lemon juice','Oil','Salt','Chaat masala','Tandoori masala'],
-  'keema': ['Mutton mince','Onion','Tomato','Ginger','Garlic','Green chillies','Green peas','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'keema matar': ['Mutton mince','Green peas','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'mutton korma': ['Mutton','Yogurt','Onion','Cashews','Ginger','Garlic','Cardamom','Cinnamon','Cloves','Bay leaf','Turmeric powder','Red chilli powder','Cream','Ghee','Salt','Coriander leaves'],
-  'nihari': ['Mutton shank','Onion','Ginger','Garlic','Nihari masala','Fennel powder','Red chilli powder','Wheat flour','Ghee','Salt','Coriander leaves','Ginger julienne','Lemon'],
-  'haleem': ['Mutton','Wheat (daliya)','Chana dal','Moong dal','Masoor dal','Urad dal','Onion','Ginger','Garlic','Garam masala','Red chilli powder','Turmeric powder','Ghee','Salt','Coriander leaves','Mint leaves','Lemon','Fried onions'],
-  'biryani mutton': ['Mutton','Basmati rice','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Milk','Ghee','Oil','Salt','Biryani masala'],
-  'mutton biryani': ['Mutton','Basmati rice','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Milk','Ghee','Oil','Salt','Biryani masala'],
-  'fish curry': ['Fish','Onion','Tomato','Ginger','Garlic','Green chillies','Turmeric powder','Red chilli powder','Coriander powder','Mustard seeds','Curry leaves','Tamarind','Coconut milk','Oil','Salt','Coriander leaves'],
-  'fish fry': ['Fish','Turmeric powder','Red chilli powder','Salt','Lemon juice','Rice flour','Oil'],
-  'prawn curry': ['Prawns','Onion','Tomato','Ginger','Garlic','Green chillies','Turmeric powder','Red chilli powder','Coconut milk','Curry leaves','Mustard seeds','Oil','Salt','Coriander leaves'],
-  'egg biryani': ['Eggs','Basmati rice','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Ghee','Oil','Salt','Biryani masala'],
-  'omelette': ['Eggs','Onion','Green chillies','Tomato','Salt','Black pepper','Oil','Coriander leaves'],
-  'anda bhurji': ['Eggs','Onion','Tomato','Green chillies','Ginger','Turmeric powder','Red chilli powder','Cumin seeds','Oil','Salt','Coriander leaves'],
-  'paneer do pyaza': ['Paneer','Onion','Tomato','Capsicum','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Cream','Oil','Salt','Coriander leaves','Kasuri methi'],
-  'paneer lababdar': ['Paneer','Onion','Tomato','Cashews','Ginger','Garlic','Cream','Kashmiri red chilli powder','Garam masala','Turmeric powder','Butter','Salt','Kasuri methi','Coriander leaves'],
-  'shahi paneer': ['Paneer','Onion','Tomato','Cashews','Cream','Ginger','Garlic','Cardamom','Cinnamon','Cloves','Bay leaf','Kashmiri red chilli powder','Turmeric powder','Ghee','Salt','Coriander leaves'],
-  'kadai paneer': ['Paneer','Capsicum','Onion','Tomato','Ginger','Garlic','Coriander seeds','Cumin seeds','Kashmiri red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'malai kofta': ['Paneer','Potato','Cashews','Onion','Tomato','Cream','Ginger','Garlic','Cardamom','Cinnamon','Bay leaf','Kashmiri red chilli powder','Garam masala','Ghee','Salt','Coriander leaves','Raisins','Cornflour'],
-  'paneer tikka masala': ['Paneer','Yogurt','Capsicum','Onion','Tomato','Ginger','Garlic','Cream','Kashmiri red chilli powder','Garam masala','Oil','Salt','Coriander leaves','Kasuri methi','Butter'],
-  'chole bhature': ['Kabuli chana','Onion','Tomato','Ginger','Garlic','Chole masala powder','Cumin seeds','Garam masala','Amchur','Oil','Salt','Coriander leaves','Maida','Yogurt','Baking soda','Sugar'],
-  'bhature': ['Maida (all-purpose flour)','Yogurt','Baking soda','Sugar','Salt','Oil','Water'],
-  'puri': ['Whole wheat flour (atta)','Salt','Oil','Water'],
-  'aloo puri': ['Whole wheat flour (atta)','Potato','Salt','Oil','Water','Turmeric powder','Red chilli powder'],
-  'gobhi paratha': ['Whole wheat flour (atta)','Cauliflower','Green chillies','Ginger','Coriander leaves','Cumin seeds','Salt','Ghee','Water'],
-  'paneer paratha': ['Whole wheat flour (atta)','Paneer','Green chillies','Coriander leaves','Cumin seeds','Salt','Ghee','Water'],
-  'methi paratha': ['Whole wheat flour (atta)','Fenugreek leaves (methi)','Green chillies','Salt','Ghee','Water'],
-  'thepla': ['Whole wheat flour (atta)','Fenugreek leaves (methi)','Yogurt','Turmeric powder','Red chilli powder','Cumin seeds','Salt','Oil','Water'],
-  'poori': ['Whole wheat flour (atta)','Salt','Oil','Water'],
-  'dum aloo': ['Baby potato','Yogurt','Onion','Tomato','Ginger','Garlic','Kashmiri red chilli powder','Fennel powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'aloo tikki': ['Potato','Bread crumbs','Green chillies','Coriander leaves','Cumin powder','Chaat masala','Salt','Oil'],
-  'baingan bharta': ['Brinjal (baingan)','Onion','Tomato','Green chillies','Ginger','Garlic','Cumin seeds','Turmeric powder','Red chilli powder','Oil','Salt','Coriander leaves'],
-  'bharwan bhindi': ['Bhindi (okra)','Onion','Besan (gram flour)','Coriander powder','Cumin powder','Red chilli powder','Amchur','Turmeric powder','Oil','Salt'],
-  'lauki': ['Bottle gourd (lauki)','Onion','Tomato','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Oil','Salt','Coriander leaves'],
-  'lauki kofta': ['Bottle gourd (lauki)','Besan','Onion','Tomato','Ginger','Garlic','Cream','Cashews','Garam masala','Oil','Salt','Coriander leaves'],
-  'tinda masala': ['Tinda (apple gourd)','Onion','Tomato','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Oil','Salt','Coriander leaves'],
-  'karela fry': ['Karela (bitter gourd)','Onion','Turmeric powder','Red chilli powder','Salt','Oil','Amchur'],
-  'mushroom masala': ['Mushroom','Onion','Tomato','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'mushroom do pyaza': ['Mushroom','Onion','Tomato','Capsicum','Ginger','Garlic','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'paneer fried rice': ['Paneer','Basmati rice','Capsicum','Carrot','Beans','Onion','Garlic','Soy sauce','Vinegar','Green chillies','Oil','Salt','Spring onion'],
-  'veg fried rice': ['Basmati rice','Capsicum','Carrot','Beans','Cabbage','Onion','Garlic','Soy sauce','Vinegar','Green chillies','Oil','Salt','Spring onion'],
-  'egg fried rice': ['Eggs','Basmati rice','Capsicum','Carrot','Beans','Onion','Garlic','Soy sauce','Vinegar','Oil','Salt','Spring onion'],
-  'chicken fried rice': ['Chicken','Basmati rice','Capsicum','Carrot','Beans','Onion','Garlic','Soy sauce','Vinegar','Oil','Salt','Spring onion'],
-  'veg manchurian': ['Cabbage','Carrot','Capsicum','Onion','Garlic','Ginger','Soy sauce','Vinegar','Cornflour','Maida','Green chillies','Oil','Salt','Spring onion'],
-  'chilli paneer': ['Paneer','Capsicum','Onion','Garlic','Ginger','Soy sauce','Vinegar','Red chilli sauce','Cornflour','Green chillies','Oil','Salt','Spring onion'],
-  'chilli chicken': ['Chicken','Capsicum','Onion','Garlic','Ginger','Soy sauce','Vinegar','Red chilli sauce','Cornflour','Green chillies','Oil','Salt','Spring onion'],
-  'hakka noodles': ['Noodles','Cabbage','Carrot','Capsicum','Onion','Garlic','Ginger','Soy sauce','Vinegar','Green chillies','Oil','Salt','Spring onion'],
-  'maggi': ['Maggi noodles','Water','Maggi tastemaker'],
-  'pasta': ['Pasta','Onion','Capsicum','Tomato','Garlic','Olive oil','Mixed herbs','Red chilli flakes','Salt','Cheese'],
-  'sandwich': ['Bread','Butter','Cucumber','Tomato','Onion','Capsicum','Cheese','Salt','Black pepper','Chaat masala'],
-  'grilled sandwich': ['Bread','Butter','Potato','Onion','Capsicum','Tomato','Cheese','Green chutney','Salt'],
-  'curd rice': ['Basmati rice','Yogurt (curd)','Mustard seeds','Curry leaves','Green chillies','Ginger','Urad dal','Oil','Salt','Pomegranate'],
-  'lemon rice': ['Basmati rice','Lemon juice','Mustard seeds','Curry leaves','Green chillies','Peanuts','Urad dal','Chana dal','Turmeric powder','Oil','Salt'],
-  'tahari': ['Basmati rice','Potato','Onion','Green chillies','Turmeric powder','Cumin seeds','Bay leaf','Ghee','Salt','Coriander leaves'],
-  'veg biryani': ['Basmati rice','Mixed vegetables','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Ghee','Oil','Salt','Biryani masala'],
-  'paneer biryani': ['Paneer','Basmati rice','Onion','Yogurt','Ginger','Garlic','Green chillies','Mint leaves','Coriander leaves','Bay leaf','Cinnamon','Cardamom','Cloves','Saffron','Ghee','Oil','Salt','Biryani masala'],
-  'chicken do pyaza': ['Chicken','Onion','Tomato','Ginger','Garlic','Green chillies','Yogurt','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'chicken korma': ['Chicken','Yogurt','Onion','Cashews','Ginger','Garlic','Cardamom','Cinnamon','Cloves','Bay leaf','Turmeric powder','Red chilli powder','Cream','Ghee','Salt','Coriander leaves'],
-  'chicken keema': ['Chicken mince','Onion','Tomato','Ginger','Garlic','Green chillies','Green peas','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'seekh kebab': ['Mutton mince','Onion','Green chillies','Ginger','Garlic','Coriander leaves','Mint leaves','Cumin powder','Garam masala','Red chilli powder','Salt','Oil'],
-  'shammi kebab': ['Mutton mince','Chana dal','Onion','Ginger','Garlic','Green chillies','Eggs','Cardamom','Cinnamon','Cloves','Red chilli powder','Salt','Oil'],
-  'chapli kebab': ['Mutton mince','Onion','Tomato','Green chillies','Coriander leaves','Pomegranate seeds','Cumin seeds','Red chilli powder','Egg','Salt','Oil'],
-  'kofta curry': ['Mutton mince','Onion','Tomato','Ginger','Garlic','Yogurt','Cashews','Cardamom','Cinnamon','Red chilli powder','Garam masala','Cream','Oil','Salt','Coriander leaves'],
-  'mutton curry': ['Mutton','Onion','Tomato','Yogurt','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'gosht': ['Mutton','Onion','Tomato','Yogurt','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'qorma': ['Mutton','Yogurt','Onion','Cashews','Ginger','Garlic','Cardamom','Cinnamon','Cloves','Bay leaf','Cream','Ghee','Salt','Coriander leaves'],
-  'korma': ['Mutton','Yogurt','Onion','Cashews','Ginger','Garlic','Cardamom','Cinnamon','Cloves','Bay leaf','Cream','Ghee','Salt','Coriander leaves'],
-  'paya': ['Mutton trotters','Onion','Ginger','Garlic','Turmeric powder','Red chilli powder','Coriander powder','Garam masala','Oil','Salt','Coriander leaves','Ginger julienne'],
-  'chicken roast': ['Chicken','Onion','Ginger-garlic paste','Yogurt','Kashmiri red chilli powder','Turmeric powder','Garam masala','Lemon juice','Oil','Salt'],
-  'dal gosht': ['Mutton','Chana dal','Onion','Tomato','Ginger','Garlic','Green chillies','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt','Coriander leaves'],
-  'saag gosht': ['Mutton','Spinach (palak)','Onion','Ginger','Garlic','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Garam masala','Oil','Salt'],
-  'saag': ['Spinach (palak)','Mustard greens (sarson)','Onion','Ginger','Garlic','Green chillies','Maize flour (makki)','Ghee','Salt'],
-  'sarson ka saag': ['Mustard greens (sarson)','Spinach','Onion','Ginger','Garlic','Green chillies','Maize flour (makki)','Ghee','Salt'],
-  'makki roti': ['Maize flour (makki)','Salt','Water','Ghee'],
-  'missi roti': ['Besan (gram flour)','Whole wheat flour','Onion','Green chillies','Coriander leaves','Cumin seeds','Salt','Oil','Water'],
-  'laccha paratha': ['Whole wheat flour (atta)','Ghee','Salt','Water'],
-  'rumali roti': ['Maida (all-purpose flour)','Whole wheat flour','Salt','Oil','Water'],
-  'kulcha': ['Maida (all-purpose flour)','Yogurt','Baking powder','Salt','Butter','Water'],
-  'amritsari kulcha': ['Maida (all-purpose flour)','Potato','Onion','Green chillies','Coriander leaves','Salt','Yogurt','Baking powder','Butter'],
-  'stuffed paratha': ['Whole wheat flour (atta)','Mixed vegetables','Green chillies','Ginger','Coriander leaves','Salt','Ghee','Water'],
-  'chicken stew': ['Chicken','Potato','Carrot','Green peas','Onion','Coconut milk','Ginger','Garlic','Green chillies','Curry leaves','Cardamom','Cinnamon','Cloves','Oil','Salt'],
-  'mutton stew': ['Mutton','Potato','Carrot','Onion','Coconut milk','Ginger','Garlic','Green chillies','Curry leaves','Cardamom','Cinnamon','Oil','Salt'],
-  'dal fry': ['Toor dal','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Mustard seeds','Ghee','Turmeric powder','Red chilli powder','Salt','Coriander leaves'],
-  'moong dal': ['Moong dal','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Turmeric powder','Ghee','Salt','Coriander leaves'],
-  'masoor dal': ['Masoor dal','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Turmeric powder','Red chilli powder','Ghee','Salt','Coriander leaves'],
-  'chana dal': ['Chana dal','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Turmeric powder','Oil','Salt','Coriander leaves'],
-  'kali dal': ['Urad dal (whole black)','Butter','Cream','Onion','Tomato','Ginger','Garlic','Red chilli powder','Garam masala','Kasuri methi','Salt'],
-  'dal palak': ['Toor dal','Spinach (palak)','Onion','Tomato','Garlic','Ginger','Green chillies','Cumin seeds','Turmeric powder','Ghee','Salt','Coriander leaves'],
-  'sheer khurma': ['Vermicelli (seviyan)','Milk','Sugar','Ghee','Dates','Almonds','Cashews','Raisins','Cardamom','Saffron'],
-  'kheer': ['Rice','Milk','Sugar','Cardamom','Almonds','Cashews','Saffron'],
-  'gulab jamun': ['Milk powder','Maida','Ghee','Baking soda','Sugar','Cardamom','Rose water','Water'],
-  'gajar halwa': ['Carrot','Milk','Sugar','Ghee','Cardamom','Almonds','Cashews','Raisins'],
-  'suji halwa': ['Rava (semolina)','Sugar','Ghee','Cardamom','Almonds','Cashews','Raisins','Water'],
-};
-
-const PANTRY_FILTER = [
-  'water','salt','oil','ghee','butter','sugar',
-  'turmeric powder','red chilli powder','kashmiri red chilli powder','coriander powder',
-  'garam masala','cumin seeds','cumin powder','mustard seeds','chaat masala',
-  'amchur','amchur powder','dry mango powder','hing','hing (asafoetida)',
-  'bay leaf','cinnamon','cardamom','cloves','saffron','black pepper',
-  'chole masala powder','chana masala powder','sambar powder','biryani masala',
-  'pav bhaji masala','peri peri spice mix','kasuri methi','baking soda',
-];
-
-function isPantryItem(ing) {
-  const n = ing.toLowerCase().replace(/\s*\(.*?\)\s*/g,'').trim();
-  if (PANTRY_FILTER.includes(n)) return true;
-  if (/powder$|masala$|seeds$/.test(n)) return true;
-  return false;
-}
-
-function getIngredientsForDish(dishStr) {
-  if (!dishStr) return [];
-  const norm = dishStr.trim().toLowerCase()
-    .replace(/\s*\(.*?\)\s*/g, '')
-    .replace(/\d+\s*/g, '')
-    .trim();
-  let list = null;
-  if (INGREDIENT_DB[norm]) list = [...INGREDIENT_DB[norm]];
-  else {
-    for (const key of Object.keys(INGREDIENT_DB)) {
-      if (norm.includes(key) || key.includes(norm)) { list = [...INGREDIENT_DB[key]]; break; }
-    }
-  }
-  if (!list && CSV_RECIPE_DB) {
-    if (CSV_RECIPE_DB[norm]) list = [...CSV_RECIPE_DB[norm]];
-    else {
-      for (const key of Object.keys(CSV_RECIPE_DB)) {
-        if (norm.includes(key) || key.includes(norm)) { list = [...CSV_RECIPE_DB[key]]; break; }
-      }
-    }
-  }
-  if (!list && AI_INGREDIENT_CACHE[norm]) list = [...AI_INGREDIENT_CACHE[norm]];
-  if (!list) return [dishStr.trim() + ' (ingredients TBD)'];
-  return list.filter(ing => !isPantryItem(ing));
-}
-
-function getInventoryCommentMap() {
-  const key = 'inventory_' + state.currentCustomerId;
-  let uploads = [];
-  try { uploads = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  const withNotes = uploads.filter(u => u.notes && u.notes.trim()).sort((a, b) => b.date.localeCompare(a.date));
-  if (!withNotes.length) return {};
-  // Merge all uploads (most recent first, so first entry wins)
-  const entries = [];
-  for (const u of withNotes) {
-    const d = new Date(u.date + 'T00:00:00');
-    const dateTag = d.getDate() + ' ' + MONTHS[d.getMonth()];
-    const typeTag = u.type === 'analysis' ? 'Analysis' : 'Check';
-    u.notes.split('\n').forEach(line => {
-      const idx = line.indexOf(':');
-      if (idx < 1) return;
-      const name = line.slice(0, idx).trim().toLowerCase();
-      const comment = line.slice(idx + 1).trim();
-      if (name && comment) entries.push({ name, comment: comment + ' (' + typeTag + ' ' + dateTag + ')' });
-    });
-  }
-  return { _entries: entries };
-}
-
-function lookupInventoryComment(invData, ingredientName) {
-  if (!invData._entries || !ingredientName) return '';
-  const norm = ingredientName.toLowerCase().replace(/\s*\(.*?\)\s*/g, ' ').trim();
-  const words = norm.split(/\s+/);
-  for (const e of invData._entries) {
-    if (e.name === norm) return e.comment;
-    if (norm.includes(e.name) || e.name.includes(norm)) return e.comment;
-    const eWords = e.name.split(/\s+/);
-    if (eWords.some(w => w.length > 2 && words.includes(w))) return e.comment;
-  }
-  return '';
-}
-
-function buildIngredientsXLSX(plan, dates, customer) {
-  const AVAIL_LIST = 'Available in inventory,Not available in inventory,Dont know';
-  const STATUS_LIST = 'Blinkit,Swiggy Instamart,Zepto,FirstClub,Fresh2Home,Licious,Big Basket,Handpickd,Needs to be added to cart';
-  const enc = s => strToBytes(s);
-
-  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="3">
-    <font><sz val="10"/><name val="Calibri"/></font>
-    <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
-    <font><b/><sz val="10"/><name val="Calibri"/></font>
-  </fonts>
-  <fills count="4">
-    <fill><patternFill patternType="none"/></fill>
-    <fill><patternFill patternType="gray125"/></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FF1F3864"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FF2E75B6"/></patternFill></fill>
-  </fills>
-  <borders count="2">
-    <border><left/><right/><top/><bottom/><diagonal/></border>
-    <border>
-      <left style="thin"><color rgb="FF000000"/></left>
-      <right style="thin"><color rgb="FF000000"/></right>
-      <top style="thin"><color rgb="FF000000"/></top>
-      <bottom style="thin"><color rgb="FF000000"/></bottom>
-    </border>
-  </borders>
-  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="5">
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
-    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1"/></xf>
-  </cellXfs>
-</styleSheet>`;
-
-  // Build one sheet per day
-  const sheetXmls = plan.map((day, i) => {
-    const dt = dates[i];
-    const dayLabel = DAYS_OF_WEEK[i] + ' ' + MONTHS[dt.getMonth()] + ' ' + dt.getDate();
-    const meals = ['breakfast','lunch','dinner'];
-    const mealTitles = ['Breakfast','Lunch','Dinner'];
-
-    // Row 1: context (day + dish names)
-    const dishes = mealTitles.map((m,mi) => {
-      const d = day[meals[mi]].dish;
-      return d ? m + ': ' + d : null;
-    }).filter(Boolean).join(' | ');
-    const contextStr = dayLabel + (dishes ? ' — ' + dishes : '');
-
-    // Cols: A-D = Breakfast, E-H = Lunch, I-L = Dinner
-    // 4 cols per meal: Ingredients, Availability, Status, Inventory Comment
-    // Row 2: section headers (merged A2:D2, E2:H2, I2:L2)
-    // Row 3: sub-headers
-    // Rows 4..(3+DATA_ROWS): data rows
-
-    // Gather ingredients per meal by splitting dishes on '+'
-    const mealIngredients = meals.map(m => {
-      const dishes = splitDishes(day[m].dish);
-      const all = [];
-      for (const d of dishes) {
-        const ings = getIngredientsForDish(d);
-        ings.forEach(ing => { if (!all.includes(ing)) all.push(ing); });
-      }
-      return all;
-    });
-
-    const invMap = getInventoryCommentMap();
-    const maxIngredients = Math.max(...mealIngredients.map(a => a.length), 0);
-    const DATA_ROWS = Math.max(maxIngredients + 5, 20);
-    const lastDataRow = 3 + DATA_ROWS;
-
-    const xmlEsc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-    // Column letters for 3 groups of 4
-    const colGroups = [
-      ['A','B','C','D'],
-      ['E','F','G','H'],
-      ['I','J','K','L']
-    ];
-
-    // Section header row (style 1 = dark blue, merged across 4 cols)
-    const secRow = mealTitles.map((t, mi) => {
-      return colGroups[mi].map((col, ci) =>
-        `<c r="${col}2" t="inlineStr" s="1"><is><t>${ci===0?t:''}</t></is></c>`
-      ).join('');
-    }).join('');
-
-    // Sub-header row (style 2 = medium blue)
-    const subLabels = ['Ingredients','Availability','Status','Inventory Comment'];
-    const subRow = colGroups.map(cols =>
-      cols.map((col, ci) =>
-        `<c r="${col}3" t="inlineStr" s="2"><is><t>${subLabels[ci]}</t></is></c>`
-      ).join('')
-    ).join('');
-
-    // Data rows — populated with ingredients + inventory comment
-    const dataRows = Array.from({length: DATA_ROWS}, (_, ri) => {
-      const r = 4 + ri;
-      const cells = colGroups.map((cols, mi) => {
-        const ing = mealIngredients[mi][ri] || '';
-        const invComment = ing ? lookupInventoryComment(invMap, ing) : '';
-        return [
-          `<c r="${cols[0]}${r}" t="inlineStr" s="3"><is><t>${xmlEsc(ing)}</t></is></c>`,
-          `<c r="${cols[1]}${r}" s="3"/>`,
-          `<c r="${cols[2]}${r}" s="3"/>`,
-          `<c r="${cols[3]}${r}" t="inlineStr" s="3"><is><t>${xmlEsc(invComment)}</t></is></c>`
-        ].join('');
-      }).join('');
-      return `<row r="${r}">${cells}</row>`;
-    }).join('');
-
-    // Data validations (cols B,F,J = Availability; C,G,K = Status)
-    const availSqref = `B4:B${lastDataRow} F4:F${lastDataRow} J4:J${lastDataRow}`;
-    const statusSqref = `C4:C${lastDataRow} G4:G${lastDataRow} K4:K${lastDataRow}`;
-
-    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <sheetFormatPr defaultRowHeight="15"/>
-  <cols>
-    <col min="1" max="1" width="28" customWidth="1"/>
-    <col min="2" max="2" width="22" customWidth="1"/>
-    <col min="3" max="3" width="22" customWidth="1"/>
-    <col min="4" max="4" width="26" customWidth="1"/>
-    <col min="5" max="5" width="28" customWidth="1"/>
-    <col min="6" max="6" width="22" customWidth="1"/>
-    <col min="7" max="7" width="22" customWidth="1"/>
-    <col min="8" max="8" width="26" customWidth="1"/>
-    <col min="9" max="9" width="28" customWidth="1"/>
-    <col min="10" max="10" width="22" customWidth="1"/>
-    <col min="11" max="11" width="22" customWidth="1"/>
-    <col min="12" max="12" width="26" customWidth="1"/>
-  </cols>
-  <sheetData>
-    <row r="1"><c r="A1" t="inlineStr" s="4"><is><t>${contextStr.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</t></is></c></row>
-    <row r="2">${secRow}</row>
-    <row r="3">${subRow}</row>
-    ${dataRows}
-  </sheetData>
-  <mergeCells count="3">
-    <mergeCell ref="A2:D2"/>
-    <mergeCell ref="E2:H2"/>
-    <mergeCell ref="I2:L2"/>
-  </mergeCells>
-  <dataValidations count="2">
-    <dataValidation type="list" showDropDown="0" sqref="${availSqref}">
-      <formula1>"${AVAIL_LIST}"</formula1>
-    </dataValidation>
-    <dataValidation type="list" showDropDown="0" sqref="${statusSqref}">
-      <formula1>"${STATUS_LIST}"</formula1>
-    </dataValidation>
-  </dataValidations>
-</worksheet>`;
-  });
-
-  // Build workbook XML referencing all 7 sheets
-  const sheetEntries = DAYS_OF_WEEK.map((d, i) =>
-    `<sheet name="${d}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
-  const wbXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets>${sheetEntries}</sheets>
-</workbook>`;
-
-  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  ${DAYS_OF_WEEK.map((d,i) => `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}
-  <Relationship Id="rId8" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-</Relationships>`;
-
-  const ctTypes = DAYS_OF_WEEK.map((d,i) =>
-    `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
-  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-  ${ctTypes}
-</Types>`;
-
-  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-</Relationships>`;
-
-  const files = [
-    {name: '[Content_Types].xml', data: enc(ct)},
-    {name: '_rels/.rels', data: enc(rootRels)},
-    {name: 'xl/workbook.xml', data: enc(wbXml)},
-    {name: 'xl/_rels/workbook.xml.rels', data: enc(wbRels)},
-    {name: 'xl/styles.xml', data: enc(stylesXml)},
-    ...sheetXmls.map((xml, i) => ({name: `xl/worksheets/sheet${i+1}.xml`, data: enc(xml)})),
-  ];
-  return buildZipUncompressed(files);
-}
-
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 loadState();
+
+// HTML escape helper (used everywhere we inject user-supplied text)
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ─── RECIPE LINKS & VIDEO PLAYER ─────────────────────────────────────────────
+const PIPED_INSTANCES = [
+  'https://pipedapi.kavin.rocks',
+  'https://pipedapi-libre.kavin.rocks',
+  'https://api.piped.yt',
+  'https://pipedapi.leptons.xyz',
+  'https://pipedapi.nosebs.ru',
+  'https://piped-api.privacy.com.de',
+  'https://pipedapi.adminforge.de',
+  'https://pipedapi.drgns.space',
+  'https://pipedapi.ducks.party',
+  'https://piped-api.codespace.cz',
+  'https://pipedapi.reallyaweso.me',
+  'https://pipedapi.darkness.services',
+];
+const INVIDIOUS_INSTANCES = [
+  'https://inv.nadeko.net',
+  'https://invidious.nerdvpn.de',
+  'https://iv.ggtyler.dev',
+  'https://invidious.privacyredirect.com',
+];
+let cachedWorkingInstance = null;
+let currentRecipeDayIdx = null;
+
+function openRecipeLinks(event, dayIdx) {
+  event.stopPropagation();
+  currentRecipeDayIdx = dayIdx;
+
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  const dayPlan = plan[dayIdx];
+
+  document.getElementById('recipe-modal-title').textContent =
+    DAYS_OF_WEEK[dayIdx] + ' — Recipe Videos';
+
+  const meals = [
+    { key: 'breakfast', label: 'Breakfast' },
+    { key: 'lunch',     label: 'Lunch' },
+    { key: 'dinner',    label: 'Dinner' },
+  ];
+
+  let rows = '';
+  meals.forEach(m => {
+    const dish = dayPlan[m.key].dish;
+    if (!dish) return;
+    const mainDish = dish.split('\n')[0].trim();
+    // Split combined dishes like "Dal tadka + jeera rice"
+    const parts = mainDish.split(/\s*\+\s*/);
+    parts.forEach(part => {
+      const clean = part
+        .replace(/\([^)]*\)/g, '')              // remove parentheticals
+        .replace(/\d+\s*(cups?|rotis?|pieces?|pcs?)/gi, '') // remove quantities
+        .trim();
+      if (!clean || clean.length < 2) return;
+      const safeClean = clean.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      rows += `<tr>
+        <td><span class="recipe-meal-label ${m.key}">${m.label}</span></td>
+        <td class="recipe-dish-name">${esc(part.trim())}</td>
+        <td>
+          <button class="yt-play-btn" onclick="playDishVideo('${safeClean}')">
+            <span class="yt-icon">▶</span> Watch
+          </button>
+        </td>
+      </tr>`;
+    });
+  });
+
+  if (!rows) {
+    rows = '<tr><td colspan="3" style="text-align:center;color:var(--text-3);padding:30px">No dishes planned for this day</td></tr>';
+  }
+
+  document.getElementById('recipe-table-body').innerHTML = rows;
+
+  // Reset to list view
+  document.getElementById('recipe-list-view').classList.remove('hidden');
+  document.getElementById('video-player-view').classList.remove('active');
+  document.getElementById('recipe-footer-hint').textContent = '▶ Click a dish to watch the top recipe video';
+
+  openModal('modal-recipe');
+}
+
+function closeRecipeModal() {
+  destroyPlayer();
+  closeModal('modal-recipe');
+}
+
+function showRecipeList() {
+  destroyPlayer();
+  document.getElementById('recipe-list-view').classList.remove('hidden');
+  document.getElementById('video-player-view').classList.remove('active');
+  document.getElementById('recipe-footer-hint').textContent = '▶ Click a dish to watch the top recipe video';
+}
+
+function destroyPlayer() {
+  const wrap = document.getElementById('video-embed-wrap');
+  const iframe = wrap.querySelector('iframe');
+  if (iframe) iframe.remove();
+  const loader = document.getElementById('video-loading');
+  loader.innerHTML = '<div class="vl-spinner"></div><span>Finding the best recipe video…</span>';
+  loader.style.display = 'none';
+  document.getElementById('video-meta-row').style.display = 'none';
+}
+
+async function playDishVideo(dishName) {
+  // Switch to video view
+  document.getElementById('recipe-list-view').classList.add('hidden');
+  document.getElementById('video-player-view').classList.add('active');
+  document.getElementById('video-dish-title').textContent = dishName;
+  document.getElementById('recipe-footer-hint').textContent = '🔍 Finding the best recipe video…';
+
+  // Reset player area
+  destroyPlayer();
+  document.getElementById('video-loading').style.display = 'flex';
+
+  const query = dishName + ' recipe Hindi short';
+  let videoId = null, videoTitle = '', channelName = '';
+
+  // ── Strategy 1: Race all Piped instances in parallel (fastest wins)
+  const pipedResult = await racePipedSearch(query);
+  if (pipedResult) {
+    videoId = pipedResult.id;
+    videoTitle = pipedResult.title;
+    channelName = pipedResult.channel;
+  }
+
+  // ── Strategy 2: Try Invidious instances if Piped failed
+  if (!videoId) {
+    const invResult = await raceInvidiousSearch(query);
+    if (invResult) {
+      videoId = invResult.id;
+      videoTitle = invResult.title;
+      channelName = invResult.channel;
+    }
+  }
+
+  if (videoId) {
+    embedVideo(videoId, videoTitle, channelName);
+  } else {
+    showVideoFallback(query);
+  }
+}
+
+async function racePipedSearch(query) {
+  // If we have a cached working instance, put it first
+  const ordered = cachedWorkingInstance
+    ? [cachedWorkingInstance, ...PIPED_INSTANCES.filter(u => u !== cachedWorkingInstance)]
+    : PIPED_INSTANCES;
+
+  const promises = ordered.map(async (base) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      const res = await fetch(
+        `${base}/search?q=${encodeURIComponent(query)}&filter=videos`,
+        { signal: ctrl.signal }
+      );
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      const items = data.items || data;
+      if (!items || !items.length) throw new Error('empty');
+      cachedWorkingInstance = base; // remember this one works
+      const best = items.find(v => v.duration > 60 && v.duration < 480) || items[0];
+      return {
+        id: (best.url || '').replace('/watch?v=', ''),
+        title: best.title || '',
+        channel: best.uploaderName || best.uploader || '',
+      };
+    } catch (e) { clearTimeout(timer); throw e; }
+  });
+
+  try { return await Promise.any(promises); }
+  catch { return null; }
+}
+
+async function raceInvidiousSearch(query) {
+  const promises = INVIDIOUS_INSTANCES.map(async (base) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      const res = await fetch(
+        `${base}/api/v1/search?q=${encodeURIComponent(query)}&type=video`,
+        { signal: ctrl.signal }
+      );
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(res.status);
+      const items = await res.json();
+      if (!items || !items.length) throw new Error('empty');
+      const best = items.find(v => v.lengthSeconds > 60 && v.lengthSeconds < 480) || items[0];
+      return {
+        id: best.videoId || '',
+        title: best.title || '',
+        channel: best.author || '',
+      };
+    } catch (e) { clearTimeout(timer); throw e; }
+  });
+
+  try { return await Promise.any(promises); }
+  catch { return null; }
+}
+
+function embedVideo(videoId, title, channel) {
+  const wrap = document.getElementById('video-embed-wrap');
+  document.getElementById('video-loading').style.display = 'none';
+
+  const iframe = document.createElement('iframe');
+  iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+  iframe.setAttribute('allowfullscreen', '');
+  wrap.appendChild(iframe);
+
+  // Meta row
+  document.getElementById('video-meta-row').style.display = 'flex';
+  document.getElementById('video-meta-text').textContent =
+    title ? (channel ? title + ' · ' + channel : title) : 'Top recipe video';
+  document.getElementById('video-yt-link').href =
+    'https://www.youtube.com/watch?v=' + videoId;
+  document.getElementById('recipe-footer-hint').textContent =
+    '🎬 Now playing — click ← Back to browse other dishes';
+}
+
+function showVideoFallback(query) {
+  const loader = document.getElementById('video-loading');
+  const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+  loader.innerHTML = `
+    <div style="text-align:center;padding:24px">
+      <div style="font-size:40px;margin-bottom:14px">🎬</div>
+      <div style="color:#999;margin-bottom:18px;font-size:14px">
+        Couldn't auto-fetch a video right now.<br>
+        Click below to search YouTube directly.
+      </div>
+      <a href="${ytUrl}" target="_blank" rel="noopener"
+         style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;
+                border-radius:8px;background:#c00;color:#fff;text-decoration:none;
+                font-weight:600;font-size:14px;transition:background 0.15s"
+         onmouseover="this.style.background='#a00'" onmouseout="this.style.background='#c00'">
+        ▶ Search on YouTube
+      </a>
+    </div>`;
+  document.getElementById('recipe-footer-hint').textContent =
+    'Auto-fetch unavailable — click the button to search YouTube';
+}
 document.getElementById('home-week-label').textContent = homeWeekLabel();
 renderHomeHouseDropdown();
 
