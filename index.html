@@ -2010,48 +2010,74 @@ async function raceAllStrategies(query) {
 // ── Strategy 1: Fetch YouTube search page via CORS proxy, extract video IDs ──
 function getCorsProxyPromises(query) {
   const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+  const enc = encodeURIComponent(ytUrl);
+  // Each proxy has a different URL format; some return raw HTML, some wrap in JSON
   const proxies = [
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(ytUrl),
-    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(ytUrl),
-    'https://corsproxy.io/?' + encodeURIComponent(ytUrl),
+    { url: 'https://r.jina.ai/' + ytUrl, json: false },
+    { url: 'https://api.allorigins.win/raw?url=' + enc, json: false },
+    { url: 'https://api.allorigins.win/get?url=' + enc, json: true },
+    { url: 'https://api.codetabs.com/v1/proxy?quest=' + ytUrl, json: false },
+    { url: 'https://proxy.cors.sh/' + ytUrl, json: false },
+    { url: 'https://thingproxy.freeboard.io/fetch/' + ytUrl, json: false },
   ];
-  return proxies.map(url => fetchYouTubeViaProxy(url));
+  return proxies.map(p => fetchYouTubeViaProxy(p));
 }
 
-async function fetchYouTubeViaProxy(proxyUrl) {
+async function fetchYouTubeViaProxy(proxy) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 10000);
+  const timer = setTimeout(() => ctrl.abort(), 12000);
   try {
-    const res = await fetch(proxyUrl, { signal: ctrl.signal });
+    const res = await fetch(proxy.url, { signal: ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) throw new Error(res.status);
-    const html = await res.text();
-
-    // YouTube embeds search data as ytInitialData JSON in the page
-    const match = html.match(/var\s+ytInitialData\s*=\s*(\{.+?\});\s*<\/script>/s);
-    if (!match) throw new Error('no ytInitialData');
-    const data = JSON.parse(match[1]);
-
-    // Navigate YouTube's nested JSON structure
-    const sections = data?.contents?.twoColumnSearchResultsRenderer
-      ?.primaryContents?.sectionListRenderer?.contents || [];
-    for (const section of sections) {
-      const items = section?.itemSectionRenderer?.contents;
-      if (!items) continue;
-      for (const item of items) {
-        const v = item?.videoRenderer;
-        if (v?.videoId) {
-          return {
-            id: v.videoId,
-            title: v.title?.runs?.[0]?.text || '',
-            channel: v.ownerText?.runs?.[0]?.text || '',
-          };
-        }
-      }
+    let html;
+    if (proxy.json) {
+      const j = await res.json();
+      html = j.contents || j.body || '';
+    } else {
+      html = await res.text();
     }
-    throw new Error('no videos found in data');
+    if (!html) throw new Error('empty body');
+    return parseYouTubeHtml(html);
   } catch(e) { clearTimeout(timer); throw e; }
 }
+
+function parseYouTubeHtml(html) {
+  // Approach 1: parse ytInitialData JSON (richest data)
+  let match = html.match(/ytInitialData\s*=\s*(\{.+?\})\s*;\s*<\/script>/s)
+           || html.match(/ytInitialData"\]\s*=\s*(\{.+?\})\s*;/s)
+           || html.match(/var\s+ytInitialData\s*=\s*(\{.+?\});/s);
+  if (match) {
+    try {
+      const data = JSON.parse(match[1]);
+      const sections = data?.contents?.twoColumnSearchResultsRenderer
+        ?.primaryContents?.sectionListRenderer?.contents || [];
+      for (const section of sections) {
+        const items = section?.itemSectionRenderer?.contents;
+        if (!items) continue;
+        for (const item of items) {
+          const v = item?.videoRenderer;
+          if (v?.videoId) {
+            return {
+              id: v.videoId,
+              title: v.title?.runs?.[0]?.text || '',
+              channel: v.ownerText?.runs?.[0]?.text || v.longBylineText?.runs?.[0]?.text || '',
+            };
+          }
+        }
+      }
+    } catch(e) { /* fall through to regex */ }
+  }
+  // Approach 2: brute-force regex for the first watch?v= id (works on rendered text too)
+  const idMatch = html.match(/watch\?v=([a-zA-Z0-9_-]{11})/)
+               || html.match(/"videoId":"([a-zA-Z0-9_-]{11})"/)
+               || html.match(/\/vi\/([a-zA-Z0-9_-]{11})\//);
+  if (idMatch) {
+    return { id: idMatch[1], title: '', channel: '' };
+  }
+  throw new Error('no video id found');
+}
+
 
 // ── Strategy 2 & 3: Piped + Invidious (backup) ──
 async function fetchPiped(base, query) {
@@ -2083,14 +2109,14 @@ function embedVideo(videoId, title, channel) {
   const wrap = document.getElementById('video-embed-wrap');
   document.getElementById('video-loading').style.display = 'none';
   const iframe = document.createElement('iframe');
-  iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1';
+  iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&mute=1&rel=0&playsinline=1';
   iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
   iframe.setAttribute('allowfullscreen', '');
   wrap.appendChild(iframe);
   document.getElementById('video-meta-row').style.display = 'flex';
   document.getElementById('video-meta-text').textContent = title ? (channel ? title + ' \u00B7 ' + channel : title) : 'Top recipe video';
   document.getElementById('video-yt-link').href = 'https://www.youtube.com/watch?v=' + videoId;
-  document.getElementById('recipe-footer-hint').textContent = '\uD83C\uDFAC Now playing \u2014 click \u2190 Back to browse other dishes';
+  document.getElementById('recipe-footer-hint').textContent = '\uD83C\uDFAC Now playing (muted \u2014 click \uD83D\uDD0A in player to unmute) \u2014 click \u2190 Back for other dishes';
 }
 
 function showVideoFallback(query) {
