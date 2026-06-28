@@ -445,6 +445,32 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
 .recipe-meal-label.dinner { color: #5A3A8C; }
 .recipe-dish-name { color: var(--text); font-weight: 500; }
 
+/* Custom link input column */
+.link-cell { display: flex; align-items: center; gap: 6px; }
+.link-input {
+  flex: 1; min-width: 90px; max-width: 150px; padding: 6px 9px;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  font-size: 12px; color: var(--text); font-family: inherit;
+  transition: border-color 0.15s;
+}
+.link-input:focus { outline: none; border-color: var(--green); }
+.link-input.has-saved { border-color: var(--green); background: var(--green-lt); }
+.link-save-btn {
+  padding: 6px 10px; border-radius: 7px; border: 1.5px solid var(--green);
+  background: var(--green); color: #fff; cursor: pointer; font-size: 12px;
+  font-weight: 600; white-space: nowrap; transition: all 0.12s;
+}
+.link-save-btn:hover { background: var(--green-dk); }
+.link-saved-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
+  color: var(--green); font-weight: 600; white-space: nowrap;
+}
+.link-clear-btn {
+  cursor: pointer; color: var(--text-3); font-size: 13px; padding: 2px 5px;
+  border-radius: 4px; border: none; background: transparent;
+}
+.link-clear-btn:hover { background: rgba(0,0,0,0.06); color: var(--red); }
+
 .yt-play-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0;
@@ -807,7 +833,7 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
       <!-- LIST VIEW: table of dishes with play buttons -->
       <div class="recipe-list-view" id="recipe-list-view" style="padding:16px 22px">
         <table class="recipe-table">
-          <thead><tr><th>Meal</th><th>Dish</th><th>Watch</th></tr></thead>
+          <thead><tr><th>Meal</th><th>Dish</th><th>Watch</th><th>Your Link</th></tr></thead>
           <tbody id="recipe-table-body"><!-- JS --></tbody>
         </table>
       </div>
@@ -864,19 +890,20 @@ let state = {
   selectedExportDays: new Set(),
   selectedHouseId: null,
   pendingImportData: null,
+  savedLinks: {}, // { "customerId|weekKey|dishname": "videoId" }
   editTarget: null, // {dayIdx, meal}
   importContext: 'home', // 'home' | 'plan'
 };
 
 // Persist
 function saveState() {
-  try { localStorage.setItem('menuPlanner_v2', JSON.stringify({customers:state.customers, plans:state.plans})); }
+  try { localStorage.setItem('menuPlanner_v2', JSON.stringify({customers:state.customers, plans:state.plans, savedLinks:state.savedLinks})); }
   catch(e){}
 }
 function loadState() {
   try {
     const d = JSON.parse(localStorage.getItem('menuPlanner_v2')||'null');
-    if (d) { state.customers = d.customers||state.customers; state.plans = d.plans||{}; }
+    if (d) { state.customers = d.customers||state.customers; state.plans = d.plans||{}; state.savedLinks = d.savedLinks||{}; }
   } catch(e){}
 }
 
@@ -1926,20 +1953,34 @@ function openRecipeLinks(event, dayIdx) {
         .trim();
       if (!clean || clean.length < 2) return;
       const safeClean = clean.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const linkKey = makeLinkKey(dayIdx, clean);
+      const savedId = state.savedLinks[linkKey] || '';
       rows += `<tr>
         <td><span class="recipe-meal-label ${m.key}">${m.label}</span></td>
         <td class="recipe-dish-name">${esc(part.trim())}</td>
         <td>
-          <button class="yt-play-btn" onclick="playDishVideo('${safeClean}')">
-            <span class="yt-icon">▶</span> Watch
+          <button class="yt-play-btn" onclick="playDishVideo('${safeClean}','${linkKey}')"
+            ${savedId ? 'style="border-color:var(--green);color:var(--green);background:var(--green-lt)"' : ''}>
+            <span class="yt-icon">▶</span> ${savedId ? 'Your Video' : 'Watch'}
           </button>
+        </td>
+        <td>
+          <div class="link-cell">
+            <input class="link-input ${savedId?'has-saved':''}" type="text"
+              id="lnk-${linkKey}"
+              placeholder="Paste YouTube link"
+              value="${savedId ? 'https://youtu.be/'+savedId : ''}"
+              onclick="event.stopPropagation()">
+            <button class="link-save-btn" onclick="saveCustomLink('${linkKey}')">${savedId?'Update':'Save'}</button>
+            ${savedId ? `<button class="link-clear-btn" onclick="clearCustomLink('${linkKey}')" title="Remove saved link">✕</button>` : ''}
+          </div>
         </td>
       </tr>`;
     });
   });
 
   if (!rows) {
-    rows = '<tr><td colspan="3" style="text-align:center;color:var(--text-3);padding:30px">No dishes planned for this day</td></tr>';
+    rows = '<tr><td colspan="4" style="text-align:center;color:var(--text-3);padding:30px">No dishes planned for this day</td></tr>';
   }
 
   document.getElementById('recipe-table-body').innerHTML = rows;
@@ -1955,6 +1996,52 @@ function openRecipeLinks(event, dayIdx) {
 function closeRecipeModal() {
   destroyPlayer();
   closeModal('modal-recipe');
+}
+
+// ── Custom YouTube link override ──
+function makeLinkKey(dayIdx, cleanDish) {
+  const wk = isoWeekKey(state.planWeekOffset);
+  const slug = cleanDish.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  return `${state.currentCustomerId}|${wk}|${dayIdx}|${slug}`;
+}
+
+function extractVideoId(url) {
+  if (!url) return '';
+  url = url.trim();
+  // Already just an 11-char id
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+  const patterns = [
+    /[?&]v=([a-zA-Z0-9_-]{11})/,       // youtube.com/watch?v=ID
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,  // youtu.be/ID
+    /\/embed\/([a-zA-Z0-9_-]{11})/,    // youtube.com/embed/ID
+    /\/shorts\/([a-zA-Z0-9_-]{11})/,   // youtube.com/shorts/ID
+    /\/live\/([a-zA-Z0-9_-]{11})/,     // youtube.com/live/ID
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return '';
+}
+
+function saveCustomLink(linkKey) {
+  const input = document.getElementById('lnk-' + linkKey);
+  const raw = input.value.trim();
+  if (!raw) { toast('Paste a YouTube link first', '!'); return; }
+  const vid = extractVideoId(raw);
+  if (!vid) { toast('Not a valid YouTube link', '!'); return; }
+  state.savedLinks[linkKey] = vid;
+  saveState();
+  // Re-render the day so the badge/Update button updates
+  openRecipeLinks({ stopPropagation(){} }, currentRecipeDayIdx);
+  toast('Custom video saved ✓');
+}
+
+function clearCustomLink(linkKey) {
+  delete state.savedLinks[linkKey];
+  saveState();
+  openRecipeLinks({ stopPropagation(){} }, currentRecipeDayIdx);
+  toast('Custom link removed');
 }
 
 function showRecipeList() {
@@ -1974,13 +2061,19 @@ function destroyPlayer() {
   document.getElementById('video-meta-row').style.display = 'none';
 }
 
-async function playDishVideo(dishName) {
+async function playDishVideo(dishName, linkKey) {
   document.getElementById('recipe-list-view').classList.add('hidden');
   document.getElementById('video-player-view').classList.add('active');
   document.getElementById('video-dish-title').textContent = dishName;
   document.getElementById('recipe-footer-hint').textContent = '🔍 Finding the best recipe video…';
   destroyPlayer();
   document.getElementById('video-loading').style.display = 'flex';
+
+  // If user saved a custom link for this dish, play it directly — skip search
+  if (linkKey && state.savedLinks[linkKey]) {
+    embedVideo(state.savedLinks[linkKey], 'Your saved video', '');
+    return;
+  }
 
   const query = dishName + ' recipe Hindi';
 
