@@ -424,6 +424,107 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
   font-size: 12.5px; color: var(--text-3); margin-bottom: 12px; line-height: 1.5;
 }
 .copy-ok { color: var(--green); font-weight: 600; font-size: 13px; display: none; align-items: center; gap: 4px; }
+
+/* ─── RECIPE / VIDEO MODAL ─── */
+.recipe-modal .modal { width: 720px; }
+.recipe-table { width: 100%; border-collapse: collapse; }
+.recipe-table th {
+  text-align: left; font-size: 11px; font-weight: 700;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 10px 14px; border-bottom: 2px solid var(--border);
+}
+.recipe-table td {
+  padding: 14px; border-bottom: 1px solid var(--border-lt);
+  font-size: 14px; vertical-align: middle;
+}
+.recipe-table tr:last-child td { border-bottom: none; }
+.recipe-table tr:nth-child(even) td { background: var(--green-xl); }
+.recipe-meal-label { font-size: 12px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+.recipe-meal-label.breakfast { color: var(--amber); }
+.recipe-meal-label.lunch { color: var(--green); }
+.recipe-meal-label.dinner { color: #5A3A8C; }
+.recipe-dish-name { color: var(--text); font-weight: 500; }
+
+.yt-play-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0;
+  background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: #333; transition: all 0.15s; white-space: nowrap;
+}
+.yt-play-btn:hover { border-color: #c00; background: #fff5f5; color: #c00; }
+.yt-play-btn .yt-icon {
+  width: 22px; height: 22px; border-radius: 4px; background: #c00;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 11px; flex-shrink: 0;
+}
+
+/* Video player view inside modal */
+.video-player-view { display: none; }
+.video-player-view.active { display: block; }
+.recipe-list-view.hidden { display: none; }
+
+.video-back-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.video-back-btn {
+  display: flex; align-items: center; gap: 5px; padding: 6px 12px;
+  border-radius: var(--r-sm); border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 13px;
+  font-weight: 600; color: var(--text-2); transition: all 0.12s;
+}
+.video-back-btn:hover { background: var(--green-lt); border-color: var(--green); color: var(--green); }
+.video-dish-title {
+  font-size: 16px; font-weight: 700; color: var(--text); flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.video-embed-wrap {
+  position: relative; width: 100%; padding-bottom: 56.25%;
+  border-radius: var(--r); overflow: hidden; background: #0a0a0a;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.video-embed-wrap iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+}
+
+.video-loading {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  background: #111; color: #aaa; font-size: 14px;
+}
+.video-loading .vl-spinner {
+  width: 32px; height: 32px; border: 3px solid #333;
+  border-top-color: #c00; border-radius: 50%;
+  animation: vl-spin 0.8s linear infinite;
+}
+@keyframes vl-spin { to { transform: rotate(360deg); } }
+
+.video-meta-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 14px;
+  padding: 10px 14px; background: var(--green-xl); border-radius: var(--r-sm);
+  font-size: 13px; color: var(--text-2);
+}
+.video-meta-row a {
+  color: var(--green); font-weight: 600; text-decoration: none;
+}
+.video-meta-row a:hover { text-decoration: underline; }
+
+.recipe-footer-hint {
+  font-size: 12px; color: var(--text-3); text-align: center;
+  padding: 12px 22px; border-top: 1px solid var(--border-lt);
+}
+
+/* Day card recipe button */
+.day-card-recipe-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 14px; border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 11px;
+  font-weight: 600; color: var(--text-3); transition: all 0.12s;
+  margin-top: 2px;
+}
+.day-card-recipe-btn:hover {
+  background: #fff5f5; border-color: #c00; color: #c00;
+}
 </style>
 
 <!-- ── SCREEN: HOME ─────────────────────────── -->
@@ -694,6 +795,49 @@ body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; backgrou
   </div>
 </div>
 
+<!-- ── MODAL: Recipe Links / Video Player ──── -->
+<div class="modal-backdrop recipe-modal" id="modal-recipe" onclick="closeModalBackdrop(event,'modal-recipe')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="recipe-modal-title">Monday — Recipe Links</div>
+      <button class="modal-close" onclick="closeRecipeModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+
+      <!-- LIST VIEW: table of dishes with play buttons -->
+      <div class="recipe-list-view" id="recipe-list-view" style="padding:16px 22px">
+        <table class="recipe-table">
+          <thead><tr><th>Meal</th><th>Dish</th><th>Watch</th></tr></thead>
+          <tbody id="recipe-table-body"><!-- JS --></tbody>
+        </table>
+      </div>
+
+      <!-- VIDEO VIEW: embedded YouTube player -->
+      <div class="video-player-view" id="video-player-view" style="padding:16px 22px">
+        <div class="video-back-row">
+          <button class="video-back-btn" onclick="showRecipeList()">← Back</button>
+          <div class="video-dish-title" id="video-dish-title">Poha with chai</div>
+        </div>
+        <div class="video-embed-wrap" id="video-embed-wrap">
+          <div class="video-loading" id="video-loading">
+            <div class="vl-spinner"></div>
+            <span>Finding the best recipe video…</span>
+          </div>
+        </div>
+        <div class="video-meta-row" id="video-meta-row" style="display:none">
+          <span>🎬</span>
+          <span id="video-meta-text">Auto-selected top recipe video</span>
+          <a id="video-yt-link" href="#" target="_blank" rel="noopener">Open on YouTube ↗</a>
+        </div>
+      </div>
+
+    </div>
+    <div class="recipe-footer-hint" id="recipe-footer-hint">
+      ▶ Click a dish to watch the top recipe video
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div class="toast-stack" id="toast-stack"></div>
 
@@ -922,6 +1066,8 @@ function renderDayGrid() {
         <div>
           <div class="day-card-name">${DAYS_OF_WEEK[i]}</div>
           <div class="day-card-date">${MONTHS[dt.getMonth()]} ${dt.getDate()}</div>
+          ${(day.breakfast.dish||day.lunch.dish||day.dinner.dish) ?
+            `<button class="day-card-recipe-btn" onclick="openRecipeLinks(event,${i})" title="Watch recipe videos">▶ Recipes</button>` : ''}
         </div>
         <div class="day-check">${sel?'✓':''}</div>
       </div>
@@ -1707,6 +1853,186 @@ function toast(msg, type) {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 loadState();
+
+// HTML escape helper (used everywhere we inject user-supplied text)
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ─── RECIPE LINKS & VIDEO PLAYER ─────────────────────────────────────────────
+const PIPED_INSTANCES = [
+  'https://pipedapi.kavin.rocks',
+  'https://api.piped.yt',
+];
+let currentRecipeDayIdx = null;
+
+function openRecipeLinks(event, dayIdx) {
+  event.stopPropagation();
+  currentRecipeDayIdx = dayIdx;
+
+  const plan = getPlan(state.currentCustomerId, state.planWeekOffset);
+  const dayPlan = plan[dayIdx];
+
+  document.getElementById('recipe-modal-title').textContent =
+    DAYS_OF_WEEK[dayIdx] + ' — Recipe Videos';
+
+  const meals = [
+    { key: 'breakfast', label: 'Breakfast' },
+    { key: 'lunch',     label: 'Lunch' },
+    { key: 'dinner',    label: 'Dinner' },
+  ];
+
+  let rows = '';
+  meals.forEach(m => {
+    const dish = dayPlan[m.key].dish;
+    if (!dish) return;
+    const mainDish = dish.split('\n')[0].trim();
+    // Split combined dishes like "Dal tadka + jeera rice"
+    const parts = mainDish.split(/\s*\+\s*/);
+    parts.forEach(part => {
+      const clean = part
+        .replace(/\([^)]*\)/g, '')              // remove parentheticals
+        .replace(/\d+\s*(cups?|rotis?|pieces?|pcs?)/gi, '') // remove quantities
+        .trim();
+      if (!clean || clean.length < 2) return;
+      const safeClean = clean.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      rows += `<tr>
+        <td><span class="recipe-meal-label ${m.key}">${m.label}</span></td>
+        <td class="recipe-dish-name">${esc(part.trim())}</td>
+        <td>
+          <button class="yt-play-btn" onclick="playDishVideo('${safeClean}')">
+            <span class="yt-icon">▶</span> Watch
+          </button>
+        </td>
+      </tr>`;
+    });
+  });
+
+  if (!rows) {
+    rows = '<tr><td colspan="3" style="text-align:center;color:var(--text-3);padding:30px">No dishes planned for this day</td></tr>';
+  }
+
+  document.getElementById('recipe-table-body').innerHTML = rows;
+
+  // Reset to list view
+  document.getElementById('recipe-list-view').classList.remove('hidden');
+  document.getElementById('video-player-view').classList.remove('active');
+  document.getElementById('recipe-footer-hint').textContent = '▶ Click a dish to watch the top recipe video';
+
+  openModal('modal-recipe');
+}
+
+function closeRecipeModal() {
+  destroyPlayer();
+  closeModal('modal-recipe');
+}
+
+function showRecipeList() {
+  destroyPlayer();
+  document.getElementById('recipe-list-view').classList.remove('hidden');
+  document.getElementById('video-player-view').classList.remove('active');
+  document.getElementById('recipe-footer-hint').textContent = '▶ Click a dish to watch the top recipe video';
+}
+
+function destroyPlayer() {
+  const wrap = document.getElementById('video-embed-wrap');
+  const iframe = wrap.querySelector('iframe');
+  if (iframe) iframe.remove();
+  const loader = document.getElementById('video-loading');
+  loader.innerHTML = '<div class="vl-spinner"></div><span>Finding the best recipe video…</span>';
+  loader.style.display = 'none';
+  document.getElementById('video-meta-row').style.display = 'none';
+}
+
+async function playDishVideo(dishName) {
+  // Switch to video view
+  document.getElementById('recipe-list-view').classList.add('hidden');
+  document.getElementById('video-player-view').classList.add('active');
+  document.getElementById('video-dish-title').textContent = dishName;
+  document.getElementById('recipe-footer-hint').textContent = '🔍 Finding the best recipe video…';
+
+  // Reset player area
+  destroyPlayer();
+  document.getElementById('video-loading').style.display = 'flex';
+
+  const query = dishName + ' recipe Hindi short';
+  let videoId = null, videoTitle = '', channelName = '';
+
+  // Try each Piped instance
+  for (const base of PIPED_INSTANCES) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch(
+        `${base}/search?q=${encodeURIComponent(query)}&filter=videos`,
+        { signal: ctrl.signal }
+      );
+      clearTimeout(timer);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const items = data.items || data;
+      if (!items || !items.length) continue;
+
+      // Prefer a video between 1–8 min (good recipe length)
+      const best = items.find(v => v.duration > 60 && v.duration < 480) || items[0];
+      videoId = (best.url || '').replace('/watch?v=', '');
+      videoTitle = best.title || '';
+      channelName = best.uploaderName || best.uploader || '';
+      if (videoId) break;
+    } catch (e) { continue; }
+  }
+
+  if (videoId) {
+    embedVideo(videoId, videoTitle, channelName);
+  } else {
+    showVideoFallback(query);
+  }
+}
+
+function embedVideo(videoId, title, channel) {
+  const wrap = document.getElementById('video-embed-wrap');
+  document.getElementById('video-loading').style.display = 'none';
+
+  const iframe = document.createElement('iframe');
+  iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+  iframe.setAttribute('allowfullscreen', '');
+  wrap.appendChild(iframe);
+
+  // Meta row
+  document.getElementById('video-meta-row').style.display = 'flex';
+  document.getElementById('video-meta-text').textContent =
+    title ? (channel ? title + ' · ' + channel : title) : 'Top recipe video';
+  document.getElementById('video-yt-link').href =
+    'https://www.youtube.com/watch?v=' + videoId;
+  document.getElementById('recipe-footer-hint').textContent =
+    '🎬 Now playing — click ← Back to browse other dishes';
+}
+
+function showVideoFallback(query) {
+  const loader = document.getElementById('video-loading');
+  const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+  loader.innerHTML = `
+    <div style="text-align:center;padding:24px">
+      <div style="font-size:40px;margin-bottom:14px">🎬</div>
+      <div style="color:#999;margin-bottom:18px;font-size:14px">
+        Couldn't auto-fetch a video right now.<br>
+        Click below to search YouTube directly.
+      </div>
+      <a href="${ytUrl}" target="_blank" rel="noopener"
+         style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;
+                border-radius:8px;background:#c00;color:#fff;text-decoration:none;
+                font-weight:600;font-size:14px;transition:background 0.15s"
+         onmouseover="this.style.background='#a00'" onmouseout="this.style.background='#c00'">
+        ▶ Search on YouTube
+      </a>
+    </div>`;
+  document.getElementById('recipe-footer-hint').textContent =
+    'Auto-fetch unavailable — click the button to search YouTube';
+}
 document.getElementById('home-week-label').textContent = homeWeekLabel();
 renderHomeHouseDropdown();
 
